@@ -3,53 +3,168 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Threading;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace PseudoCompiler
 {
     class PseudoMain
     {
+
+        private PseudoEventHandler eventHandler;
+
         private string[] text;
         private string[] correctedText;
-        private List<string> starters = new List<string>();
+        private string[] settings;
+
         private Dictionary<string, Module> mods = new Dictionary<string, Module>();
+        private static Dictionary<string, string> setting = new Dictionary<string, string>();
+
         private List<string> currentOutput = new List<string>();
+        private List<string> starters = new List<string>();
         private List<Variable> vars = new List<Variable>();
+
         private bool debug = false;
+        private static bool allowSettings = false;
+        private static bool isInit = false;
+
         private string name = "";
         private string suggestions = "";
+        private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
+        private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
 
+        private void clearVariablesForReload()
+        {
+            currentOutput = new List<string>();
+            starters = new List<string>();
+            vars = new List<Variable>();
+            mods = new Dictionary<string, Module>();
+        }
+
+        public void modifySetting(string setting, string newValue)
+        {
+            PseudoMain.setting[setting] = newValue;
+
+            if (setting.Equals("debugs"))
+            {
+                debug = Boolean.Parse(newValue);
+            }
+
+            saveSettings();
+        }
+
+        public string getSetting(string setting)
+        {
+            return PseudoMain.setting[setting];
+        }
+
+        public bool containsSetting(string setting)
+        {
+            return PseudoMain.setting.ContainsKey(setting);
+        }
+
+        [STAThread]
         static void Main(string[] args)
         {
 
+            if (!isInit)
+            {
+                AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
+            }
+            
             Console.Title = "PseudoCompiler - READY";
+
+            allowSettings = File.Exists(settingsFile);
+
+            if (!allowSettings)
+            {
+                try
+                {
+                    Directory.CreateDirectory(settingsDirectory);
+                    Directory.CreateDirectory(settingsDirectory + "files");
+                    var file = File.Create(settingsFile);
+                    file.Close();
+                    allowSettings = true;
+                }
+                catch (Exception e)
+                {
+                    allowSettings = false;
+                    Console.WriteLine("Could not find settings file - using defaults.", "error");
+                }
+
+                /* Default Settings */
+                setting["debugs"] = "false";
+                setting["fcolor"] = "white";
+                setting["bcolor"] = "black";
+                setting["author"] = "David Tossberg";
+                setting["source"] = "Click to view!";
+                saveSettings();
+            }
 
             if (args.Length == 0)
             {
-                Console.WriteLine("You need to drag a file onto the .exe to run the compiler.");
-                Console.ReadLine();
+                /*Console.WriteLine("You need to drag a file onto the .exe to run the compiler.");
+                Console.ReadLine();*/
+                
+                while (true)
+                {
+                    OpenFileDialog ofd = new OpenFileDialog();
+                    ofd.InitialDirectory = settingsDirectory;
+                    ofd.Title = "Choose text file to run!";
+                 
+                    if (ofd.ShowDialog() == DialogResult.OK)
+                    {
+                        args = new string[]{ ofd.FileName };
+                        break;
+                    }
+                }
+            }
+
+            if (args[0].EndsWith(".txt"))
+            {
+                new PseudoMain().start(args[0]);
             }
             else
             {
-                if (args[0].EndsWith(".txt"))
-                {
-                    new PseudoMain().start(args[0]);
-                }
-                else
-                {
-                    string weirdExtension = args[0].Split('.')[args[0].Split('.').Length - 1];
-                    Console.WriteLine("I have no idea what to do with a " + weirdExtension + " file.\nPlease drag in a .txt file.");
-                    Console.ReadLine();
-                }
+                string weirdExtension = args[0].Split('.')[args[0].Split('.').Length - 1];
+                Console.WriteLine("I have no idea what to do with a " + weirdExtension + " file.\nPlease drag in a .txt file.");
+                Console.ReadLine();
             }
+
+            isInit = true;
+        }
+
+        static void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        {
+            saveSettings();
+        }
+
+        private static void saveSettings()
+        {
+            string[] toSave = new string[setting.Count()];
+            int i = 0;
+
+            foreach (string set in setting.Keys)
+            {
+                toSave[i] = set + "~" + setting[set];
+                i++;
+            }
+
+            File.WriteAllLines(settingsFile, toSave);
         }
 
         private string awaitInput()
         {
-            Console.Write("\n> ");
+            Console.Write("\n" + Environment.UserName + "@pseudo-root:~$ ");
             string input = Console.ReadLine();
             if (debug)
             {
@@ -58,9 +173,55 @@ namespace PseudoCompiler
             return input;
         }
 
+        private void loadSettings()
+        {
+            foreach (string setting in settings)
+            {
+                string[] split = setting.Split('~');
+                PseudoMain.setting[split[0].ToLower()] = split[1];
+                
+                switch (split[0].ToLower())
+                {
+                    case "debug":
+
+                        debug = Boolean.Parse(split[1]);
+
+                    break;
+
+                    case "fcolor":
+
+                        Console.ForegroundColor = (ConsoleColor) Enum.Parse(typeof(ConsoleColor), split[1], true);
+
+                    break;
+
+                    case "bcolor":
+
+                        Console.BackgroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), split[1], true);
+
+                    break;
+                }
+            }
+        }
+
         public void start(string fileName)
         {
+            clearVariablesForReload();
             text = File.ReadAllLines(fileName);
+            eventHandler = new PseudoEventHandler(this);
+
+            if (allowSettings)
+            {
+                settings = File.ReadAllLines(settingsFile);
+                loadSettings();
+            }
+
+            if (text.Length < 2)
+            {
+                Console.WriteLine("There isn't enough code in the file to run.");
+                Console.ReadLine();
+                return;
+            }
+
             name = fileName;
             suggestions = fileName.Replace(fileName.Split('\\')[fileName.Split('\\').Length - 1], "corrected.txt");
             correctedText = new string[text.Length];
@@ -79,11 +240,6 @@ namespace PseudoCompiler
             {
                 text[i] = text[i].TrimStart(new char[] { ' ', '\t' });
                 text[i] = text[i].TrimEnd(new char[] { ' ', '\t' });
-
-                /*if (text[i].Split(' ')[0].ToLower().Equals("end") && text[i].Split(' ').Length > 1)
-                {
-                    starters.Add(text[i].Split(' ')[1].ToLower()); // Dynamic keyword detection
-                }*/
 
                 if (parens.Contains(text[i].Split(' ')[0].ToLower()))
                 {
@@ -113,7 +269,7 @@ namespace PseudoCompiler
                 text[i] = parseAll(text[i]);
             }
 
-            writeLine("Welcome to David T's Pseudo Compiler", "system");
+            writeLine("Hey " + Environment.UserName + ", welcome to the Pseudo Compiler.", "system");
             writeLine("A list of suggestions has been saved to corrected.txt.", "system");
             writeLine("You can open it or type 'suggestions' to see it now.", "system");
             writeLine("Written in C#!\n\n=====\nLoaded " + fileName.Split('\\')[fileName.Split('\\').Length - 1] + ". Type 'run' to start or 'help' to see all commands.\n=====", "system");
@@ -136,9 +292,91 @@ namespace PseudoCompiler
 
                         break;
 
+                        case "open":
+
+                            OpenFileDialog ofd = new OpenFileDialog();
+
+                            if (ofd.ShowDialog() == DialogResult.OK)
+                            {
+                                Main(new string[1]{ ofd.FileName });
+                                return;
+                            }
+
+                        break;
+
+                        case "root":
+                            
+                            try
+                            {
+                                OpenFileDialog fbd = new OpenFileDialog();
+                                fbd.Title = "View Pseudo Files";
+                                fbd.InitialDirectory = settingsDirectory.Replace('/', '\\');
+                                fbd.ShowDialog();
+                            }
+                            catch (Exception botchedFile)
+                            {
+                                writeLine("Error opening file browser!", "error");
+                            }
+
+                        break;
+
+                        case "settings": // unnecessary fancy settings menu, must have in every program!
+
+                            Form settingsForm = new Form();
+
+                            Panel panel = new Panel();
+                            panel.BackColor = Color.LightSlateGray;
+                            panel.Dock = DockStyle.Fill;
+                            panel.AutoSize = false;
+                            panel.Size = new Size(300, 300);
+
+                            settingsForm.FormBorderStyle = FormBorderStyle.FixedSingle;
+                            settingsForm.Text = "Global Pseudo Settings";
+                            settingsForm.AutoScaleMode = AutoScaleMode.Font;
+                            settingsForm.AutoSize = false;
+                            settingsForm.Size = panel.Size;
+                            settingsForm.MaximizeBox = false;
+                            settingsForm.MinimizeBox = false;
+
+                            int yAmt = 0;
+                            
+                            foreach (string set in setting.Keys)
+                            {
+                                GenUtils.FancyLabel l = new GenUtils.FancyLabel()
+                                {
+                                    Name = set,
+                                    Location = new Point(5, settingsForm.Location.Y + yAmt + 5),
+                                    AutoSize = true,
+                                    Text = set.ToLower(),
+                                    Font = new Font("Courier New", 20),
+                                    BackColor = Color.Purple,
+                                    ForeColor = Color.White,
+                                    TextAlign = ContentAlignment.MiddleCenter,
+                                    Parent = panel
+                                };
+
+                                Control cont = (Control)l; // A little cheaty method to get it to accept a mouse over
+                                cont.MouseDown += new MouseEventHandler(eventHandler.onMouseDown);
+                                cont.MouseEnter += new EventHandler(eventHandler.focusGained);
+                                cont.MouseLeave += new EventHandler(eventHandler.focusLost);
+
+                                panel.Controls.Add(l);
+                                l.Visible = true;
+                                l.BringToFront();
+                                yAmt += 10 + l.Height;
+                            }
+
+                            settingsForm.Controls.Add(panel);
+                            settingsForm.Visible = true;
+
+                            Application.Run(settingsForm);
+                            writeLine("Settings menu closed.", "system");
+
+                        break;
+
                         case "reload":
 
-                            new PseudoMain().start(name);
+                            Main(new string[1] { fileName });
 
                         return;
 
@@ -186,6 +424,7 @@ namespace PseudoCompiler
                                 Console.Title = "PseudoCompiler - READY";
                                 writeLine("----", "system");
                                 writeLine("Code finished. Type 'help' for a list of commands.", "system");
+                                writeLine("Remember to view the suggestions if your code didn't work out well.", "system");
                             }
                             else
                             {
@@ -198,44 +437,28 @@ namespace PseudoCompiler
 
                             debug = !debug;
                             writeLine("Debug mode toggled.", "system");
-
-                        break;
-
-                        case "author":
-
-                            //writeLine("author", "input");
-
-                            foreach (String s in new string[] 
-                            {  
-                                "Author: David Tossberg",
-                                "Email: dtossber@purduecal.edu",
-                                "Personal GitHub: http://github.com/lyokofirelyte",
-                                "Created for use in ITS 140 or similar course"
-                            })
-                            {
-                                Console.WriteLine(s);
-                            }
+                            setting["debugs"] = debug + "";
 
                         break;
 
                         case "source":
 
-                            Process.Start("http://github.com/lyokofirelyte/pseudocompiler");
+                            Process.Start("https://github.com/lyokofirelyte/PseudoCompiler");
 
                         break;
 
                         case "help":
 
-                            //writeLine("help", "input");
+                            Console.Clear();
 
                             foreach (string s in new string[] 
-                            { 
+                            {
                                 "run (runs the program)",
                                 "reload (reloads the text file for a fresh start)",
                                 "debug (toggles debug mode on / off)",
+                                "settings (modify settings)",
+                                "open (open a new file to run)",
                                 "suggestions (shows corrected code)",
-                                "author (author information)",
-                                "source (view the C# source code)",
                                 "exit (exits the program)"
                             }){
                                 Console.WriteLine(s);
