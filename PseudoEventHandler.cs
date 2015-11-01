@@ -32,7 +32,7 @@ namespace PseudoCompiler
 
             if (main.containsSetting(control.Name))
             {
-                control.Text = main.getSetting(control.Name);
+                control.Text = "> " + main.getSetting(control.Name); // to prevent glitch
             }
         }
 
@@ -107,7 +107,7 @@ namespace PseudoCompiler
 
                 case "author":
 
-                    Process.Start("mailto:dtossber@purduecal.edu");
+                    //Process.Start("mailto:dtossber@purduecal.edu");
 
                 break;
 

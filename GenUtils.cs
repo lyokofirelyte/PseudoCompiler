@@ -14,6 +14,8 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using System.CodeDom.Compiler;
+using Microsoft.CSharp;
 
 namespace PseudoCompiler
 {
@@ -64,6 +66,53 @@ namespace PseudoCompiler
                 SetStyle(ControlStyles.UserPaint, true);
                 SetStyle(ControlStyles.AllPaintingInWmPaint, true);
                 SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            }
+        }
+
+        public static void CompileAndRun(string[] code)
+        {
+            CompilerParameters CompilerParams = new CompilerParameters();
+            string outputDirectory = Directory.GetCurrentDirectory();
+
+            CompilerParams.GenerateInMemory = true;
+            CompilerParams.TreatWarningsAsErrors = false;
+            CompilerParams.GenerateExecutable = false;
+            CompilerParams.CompilerOptions = "/optimize";
+
+            string[] references = { "System.dll" };
+            CompilerParams.ReferencedAssemblies.AddRange(references);
+
+            CSharpCodeProvider provider = new CSharpCodeProvider();
+            CompilerResults compile = provider.CompileAssemblyFromSource(CompilerParams, code);
+
+            if (compile.Errors.HasErrors)
+            {
+                string text = "Compile error: ";
+                foreach (CompilerError ce in compile.Errors)
+                {
+                    text += "rn" + ce.ToString();
+                }
+                Console.WriteLine(text);
+                return;
+            }
+
+            System.Reflection.Module module = compile.CompiledAssembly.GetModules()[0];
+            Type mt = null;
+            MethodInfo methInfo = null;
+
+            if (module != null)
+            {
+                mt = module.GetType("DynaCore.DynaCore");
+            }
+
+            if (mt != null)
+            {
+                methInfo = mt.GetMethod("Main");
+            }
+
+            if (methInfo != null)
+            {
+                methInfo.Invoke(null, new object[] { "Test" });
             }
         }
 
