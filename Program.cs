@@ -27,7 +27,7 @@ namespace PseudoCompiler
         private string[] correctedText;
         private string[] settings;
 
-        private string version = "1.2";
+        private string version = "1.3.1";
 
         private static Dictionary<string, string> setting = new Dictionary<string, string>();
 
@@ -650,6 +650,10 @@ namespace PseudoCompiler
                 writeLine("Type 'run' to run your pseudo code.", "system");
                 writeLine("Type 'help' to see all commands.", "system");
                 writeLine("Type 'debug' to see method names.", "system");
+                Console.WriteLine();
+
+                writeLine("Reference variables do not work (yet?).", "system");
+                writeLine("Arrays & Files coming soon.", "system");
             } 
             catch (Exception)
             {
