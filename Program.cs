@@ -27,7 +27,7 @@ namespace PseudoCompiler
         private string[] correctedText;
         private string[] settings;
 
-        private string version = "1.1";
+        private string version = "1.2";
 
         private static Dictionary<string, string> setting = new Dictionary<string, string>();
 
@@ -121,20 +121,21 @@ namespace PseudoCompiler
 
             if (args.Length == 0)
             {
-                /*Console.WriteLine("You need to drag a file onto the .exe to run the compiler.");
-                Console.ReadLine();*/
-                
-                while (true)
+                OpenFileDialog ofd = new OpenFileDialog();
+                ofd.InitialDirectory = settingsDirectory;
+                ofd.Title = "Choose text file to run!";
+                ofd.Filter = "Text Files|*.txt";
+
+                if (ofd.ShowDialog() == DialogResult.OK)
                 {
-                    OpenFileDialog ofd = new OpenFileDialog();
-                    ofd.InitialDirectory = settingsDirectory;
-                    ofd.Title = "Choose text file to run!";
-                 
-                    if (ofd.ShowDialog() == DialogResult.OK)
-                    {
-                        args = new string[]{ ofd.FileName };
-                        break;
-                    }
+                    args = new string[] { ofd.FileName };
+                }
+                else
+                {
+                    Console.WriteLine("You must select a file to run. Reboot the program and choose a file.\n[ press enter to exit ]");
+                    Console.ReadLine();
+                    Application.Exit();
+                    return;
                 }
             }
 
@@ -159,16 +160,19 @@ namespace PseudoCompiler
 
         private static void saveSettings()
         {
-            string[] toSave = new string[setting.Count()];
-            int i = 0;
-
-            foreach (string set in setting.Keys)
+            if (setting.Keys.Count() > 4)
             {
-                toSave[i] = set + "~" + setting[set];
-                i++;
-            }
+                string[] toSave = new string[setting.Count()];
+                int i = 0;
 
-            File.WriteAllLines(settingsFile, toSave);
+                foreach (string set in setting.Keys)
+                {
+                    toSave[i] = set + "~" + setting[set];
+                    i++;
+                }
+
+                File.WriteAllLines(settingsFile, toSave);
+            }
         }
 
         private string awaitInput()
@@ -230,6 +234,11 @@ namespace PseudoCompiler
             text = File.ReadAllLines(fileName);
             eventHandler = new PseudoEventHandler(this);
             cDir = settingsDirectory.Replace('/', '\\');
+
+            if (proc != null)
+            {
+                proc.Dispose();
+            }
 
             proc = new Process
             {
@@ -412,12 +421,12 @@ namespace PseudoCompiler
                         text[i] += ";";
 
 
-                        if (args.Length >= 3 && args[2].EndsWith("]") && args[2].Contains('['))
+                        /*if (args.Length >= 3 && args[2].EndsWith("]") && args[2].Contains('['))
                         {
 
                         }
 
-                        string[] texts = new string[0];
+                        string[] texts = new string[0];*/
 
                     break;
 
@@ -468,7 +477,7 @@ namespace PseudoCompiler
 
                     case "for": // So, the pseudo syntax is actually 87% more confusing than the normal syntax.
 
-                        if (text[i].ToLower().Contains(" step ")) // only change if pseudo
+                        if (text[i].ToLower().Contains(" to ")) // only change if pseudo
                         {
                             string firstVar = text[i].Split(' ')[1];
                             text[i] = text[i].Substring(args[0].Length);
@@ -479,13 +488,13 @@ namespace PseudoCompiler
                             {
                                 text[i] = text[i].Replace(" Step ", "; " + firstVar + " = (");
                                 text[i] = text[i].Replace(" step ", "; " + firstVar + " = (");
+                                text[i] += ")){";
                             }
                             else
                             {
                                 text[i] += "; " + firstVar + "++";
+                                text[i] += "){";
                             }
-
-                            text[i] += ")){";
                         }
 
                     break;
@@ -554,11 +563,21 @@ namespace PseudoCompiler
             toCompile = toCompile.Replace("%after%", newText);
             toCompile = toCompile.Replace("\n", "");
             File.WriteAllLines(csFile, new string[] { toCompile });
+            string phrase = (fileName.Split('\\')[fileName.Split('\\').Length - 1] + " is ready").ToUpper();
+            string arrows = "";
 
             writeLine("Hey " + Environment.UserName + ", welcome to the Pseudo Compiler.", "system");
-            writeLine("A list of suggestions has been saved to corrected.txt.", "system");
-            writeLine("You can open it or type 'suggestions' to see it now.", "system");
-            writeLine("Written in C#!\n\n=====\nLoaded " + fileName.Split('\\')[fileName.Split('\\').Length - 1] + ". Type 'run' to start or 'help' to see all commands.\n=====", "system");
+            writeLine("View the examples on proper formatting to avoid errors.", "system");
+            writeLine("Written in C#!\n", "system");
+            
+            for (int i = 0; i < phrase.Length; i++)
+            {
+                arrows += "=";
+            }
+
+            Console.WriteLine(arrows);
+            Console.WriteLine(phrase);
+            Console.WriteLine(arrows + "\n");
 
             try
             {
@@ -615,8 +634,22 @@ namespace PseudoCompiler
                     else
                     {
                         writeLine("You're up to date! Running version " + this.version, "system");
+
+                        foreach (string f in Directory.GetFiles(Directory.GetCurrentDirectory()))
+                        {
+                            if (f.Contains("PseudoCompiler v") && f.EndsWith(".exe") && !f.Contains("PseudoCompiler v" + this.version + ".exe"))
+                            {
+                                File.Delete(f);
+                                writeLine("Deleted " + f.Split('\\')[f.Split('\\').Length-1] + " (old version)", "system");
+                            }
+                        }
                     }
                 }
+
+                Console.WriteLine();
+                writeLine("Type 'run' to run your pseudo code.", "system");
+                writeLine("Type 'help' to see all commands.", "system");
+                writeLine("Type 'debug' to see method names.", "system");
             } 
             catch (Exception)
             {
@@ -664,6 +697,13 @@ namespace PseudoCompiler
 
                         break;
 
+                        case "update":
+
+                            modifySetting("update", getSetting("update").Equals("automatic") ? "disabled" : "automatic");
+                            writeLine("Update setting changed to: " + getSetting("update"), "system");
+
+                        break;
+
                         case "settings": // unnecessary fancy settings menu, must have in every program!
 
                             Form settingsForm = new Form();
@@ -672,7 +712,7 @@ namespace PseudoCompiler
                             panel.BackColor = Color.LightSlateGray;
                             panel.Dock = DockStyle.Fill;
                             panel.AutoSize = false;
-                            panel.Size = new Size(300, 300);
+                            panel.Size = new Size(300, 330);
 
                             settingsForm.FormBorderStyle = FormBorderStyle.FixedSingle;
                             settingsForm.Text = "Global Pseudo Settings";
@@ -726,6 +766,12 @@ namespace PseudoCompiler
                             Main(new string[1] { fileName });
 
                         return;
+
+                        case "changelog":
+
+                            Process.Start("https://github.com/lyokofirelyte/PseudoCompiler/commits/master");
+
+                        break;
 
                         case "suggestions":
 
@@ -810,10 +856,12 @@ namespace PseudoCompiler
                                 "debug (toggles debug mode on / off)",
                                 "settings (modify settings)",
                                 "open (open a new file to run)",
+                                "root (view program files)",
                                 "suggestions (shows corrected code)",
                                 "newinstance (open a new instance in another window)",
                                 "admin (login to the super secret account)",
                                 "source (view source code on github)",
+                                "changelog (view a poorly described list of changes)",
                                 "exit (exits the program)",
                                 "",
                                 "--- --- --- --- --- --- ---",
