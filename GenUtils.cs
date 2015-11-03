@@ -87,12 +87,7 @@ namespace PseudoCompiler
 
             if (compile.Errors.HasErrors)
             {
-                string text = "Compile error: ";
-                foreach (CompilerError ce in compile.Errors)
-                {
-                    text += "rn" + ce.ToString();
-                }
-                Console.WriteLine(text);
+                Console.WriteLine(compile.Errors[compile.Errors.Count - 1]);
                 return;
             }
 

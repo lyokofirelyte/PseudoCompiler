@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
 using System.IO;
 using System.Threading;
 using System.Reflection;
@@ -25,6 +26,8 @@ namespace PseudoCompiler
         private static string[] text;
         private string[] correctedText;
         private string[] settings;
+
+        private string version = "1.1";
 
         private static Dictionary<string, string> setting = new Dictionary<string, string>();
 
@@ -110,6 +113,7 @@ namespace PseudoCompiler
                 setting["debugs"] = "false";
                 setting["fcolor"] = "white";
                 setting["bcolor"] = "black";
+                setting["update"] = "automatic";
                 setting["author"] = "David Tossberg";
                 setting["source"] = "Click to view!";
                 saveSettings();
@@ -221,6 +225,7 @@ namespace PseudoCompiler
 
         public void start(string fileName)
         {
+
             clearVariablesForReload();
             text = File.ReadAllLines(fileName);
             eventHandler = new PseudoEventHandler(this);
@@ -282,7 +287,7 @@ namespace PseudoCompiler
 
             foreach (string s in new string[]
             { 
-                "using System;",
+                "using System; using System.IO;",
 
                 "namespace DynaCore",
                 "{",
@@ -313,11 +318,14 @@ namespace PseudoCompiler
             for (int i = 0; i < text.Count(); i++)
             {
 
+                text[i] = text[i].Replace("False", "false");
+                text[i] = text[i].Replace("True", "true");
+
                 string[] args = text[i].Split(' ');
 
                 switch (args[0].ToLower())
                 {
-                    case "module": // Module changeName() --> private void changeName(){
+                    case "module": case "begin": // Module changeName() --> private void changeName(){
 
                         text[i] = text[i].Substring(args[0].Length);
                         text[i] = "public void " + text[i] + "{";
@@ -345,33 +353,71 @@ namespace PseudoCompiler
 
                     break;
 
+                    case "else":
+
+                        if (args.Length >= 2 && args[1].Equals("if"))
+                        {
+                            text[i] = "} " + text[i];
+
+                            if (!text[i].Contains('('))
+                            {
+                                text[i] = text[i].Substring(args[0].Length);
+                                text[i] = "if (" + text[i] + ")";
+                            }
+
+                            text[i] += "{";
+                            text[i] = replaceOperators(text[i]);
+                            text[i] = text[i].Replace(" then", "");
+                            text[i] = text[i].Replace(" Then", "");
+                        }
+                        else
+                        {
+                            text[i] = "} else {";
+                        }
+
+                    break;
+
                     case "if":
 
-                        if (!text[i].Contains('('))
+                        if (!text[i].ToLower().StartsWith("if ("))
                         {
                             text[i] = text[i].Substring(args[0].Length);
                             text[i] = "if (" + text[i] + ")";
                         }
 
                         text[i] += "{";
-                        text[i] = text[i].Replace("NOT", "!=");
-                        text[i] = text[i].Replace("OR", "||");
-                        text[i] = text[i].Replace("AND", "&&");
-
-                        text[i] = text[i].Replace("not", "!=");
-                        text[i] = text[i].Replace("or", "||");
-                        text[i] = text[i].Replace("and", "&&");
+                        text[i] = replaceOperators(text[i]);
+                        text[i] = text[i].Replace(" then", "");
+                        text[i] = text[i].Replace(" Then", "");
 
                     break;
 
                     case "set": case "declare":
 
-                        text[i] = text[i].Replace(args[1], args[1].ToLower());
+                        text[i] = args[1].ToLower();
+
+                        for (int x = 2; x < args.Length; x++)
+                        {
+                            if (!args[x].ToLower().Equals("reference") && !args[x].ToLower().Equals("ref"))
+                            {
+                                text[i] += " " + args[x];
+                            }
+                        }
+
                         text[i] = text[i].Replace("boolean", "bool");
                         text[i] = text[i].Replace("integer", "int");
                         text[i] = text[i].Replace("real", "float");
-                        text[i] = text[i].Substring(args[0].Length);
+                        text[i] = text[i].Replace("True", "true");
+                        text[i] = text[i].Replace("False", "false");
                         text[i] += ";";
+
+
+                        if (args.Length >= 3 && args[2].EndsWith("]") && args[2].Contains('['))
+                        {
+
+                        }
+
+                        string[] texts = new string[0];
 
                     break;
 
@@ -392,18 +438,19 @@ namespace PseudoCompiler
 
                     case "while":
 
-                        if (!text[i].Contains(')'))
+                        if (!text[i].ToLower().StartsWith("while ("))
                         {
                             text[i] = text[i].Replace(args[0], "while (") + ")";
                         }
 
                         text[i] += "{";
+                        text[i] = replaceOperators(text[i]);
 
                     break;
 
                     case "do-while": // for people who are too lazy to condition their while loops correctly.
 
-                        if (!text[i].Contains(')'))
+                        if (!text[i].StartsWith("do-while ("))
                         {
                             text[i] = text[i].Substring(args[0].Length);
                             text[i] = "while (!doWhileBool" + i + " || " + text[i] + ")";
@@ -415,31 +462,74 @@ namespace PseudoCompiler
 
                         text[i] += "{ doWhileBool" + i + " = true;";
                         text[i] = "bool doWhileBool" + i + " = false;" + text[i];
-
-                    break;
-
-                    case "do-until": // for people who... ARE YOU KIDDING ME? WHY WOULD YOU USE THIS? WHO WOULD USE THIS?!?!?!
-
-
+                        text[i] = replaceOperators(text[i]);
 
                     break;
 
                     case "for": // So, the pseudo syntax is actually 87% more confusing than the normal syntax.
 
+                        if (text[i].ToLower().Contains(" step ")) // only change if pseudo
+                        {
+                            string firstVar = text[i].Split(' ')[1];
+                            text[i] = text[i].Substring(args[0].Length);
+                            text[i] = "for (int " + text[i];
+                            text[i] = text[i].Replace(" to ", "; " + firstVar + " <= ");
+                            text[i] = text[i].Replace(" To ", "; " + firstVar + " <= ");
+                            if (text[i].ToLower().Contains(" step "))
+                            {
+                                text[i] = text[i].Replace(" Step ", "; " + firstVar + " = (");
+                                text[i] = text[i].Replace(" step ", "; " + firstVar + " = (");
+                            }
+                            else
+                            {
+                                text[i] += "; " + firstVar + "++";
+                            }
 
+                            text[i] += ")){";
+                        }
 
                     break;
 
                     case "break": case "return":
 
-                        text[i] += ";";
+                        if (!text[i].EndsWith(";"))
+                        {
+                            text[i] += ";";
+                        }
+
                         text[i] = replaceCommas(text[i]);
+
+                    break;
+
+                    case "select":
+
+                        text[i] = text[i].Substring(args[0].Length);
+                        text[i] = "switch (" + text[i] + "){";
+
+                    break;
+
+                    case "case":
+
+                        text[i] = text[i].Substring(args[0].Length);
+                        text[i] = "case" + text[i];
 
                     break;
 
                     case "//":
 
                         text[i] = "/*" + text[i] + "*/";
+
+                    break;
+
+                    case "open":
+
+                        string file = settingsDirectory + "files/" + args[1];
+
+                        if (!File.Exists(file))
+                        {
+                            var f = File.Create(file);
+                            f.Close();
+                        }
 
                     break;
 
@@ -464,11 +554,74 @@ namespace PseudoCompiler
             toCompile = toCompile.Replace("%after%", newText);
             toCompile = toCompile.Replace("\n", "");
             File.WriteAllLines(csFile, new string[] { toCompile });
-           
+
             writeLine("Hey " + Environment.UserName + ", welcome to the Pseudo Compiler.", "system");
             writeLine("A list of suggestions has been saved to corrected.txt.", "system");
             writeLine("You can open it or type 'suggestions' to see it now.", "system");
             writeLine("Written in C#!\n\n=====\nLoaded " + fileName.Split('\\')[fileName.Split('\\').Length - 1] + ". Type 'run' to start or 'help' to see all commands.\n=====", "system");
+
+            try
+            {
+                if (getSetting("update").ToLower().Equals("automatic"))
+                {
+                    writeLine("Checking for updates...", "system");
+
+                    WebClient client = new WebClient();
+                    Stream stream = client.OpenRead("https://github.com/lyokofirelyte/PseudoCompiler/blob/master/README.md");
+                    StreamReader reader = new StreamReader(stream);
+                    string content = reader.ReadToEnd();
+                    string version = "";
+
+                    int location = content.IndexOf("<p>Version: ") + 11;
+                    int z = 1;
+
+                    while ((location + z) < content.Length)
+                    {
+                        char c = content[location + z];
+                        if (c.Equals('<'))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            version += c;
+                        }
+                        z++;
+                    }
+
+                    if (!version.Equals(this.version))
+                    {
+                        writeLine("A new version (" + version + ") is released.", "system");
+                        writeLine("You're only running version " + this.version + ".", "system");
+                        writeLine("Automatically updating...", "system");
+                        WebClient wc = new WebClient();
+
+                        wc.DownloadProgressChanged += (a, b) =>
+                        {
+                            Console.Write("\r" + b.ProgressPercentage.ToString() + " ");
+                        };
+
+                        wc.DownloadFileCompleted += (a, b) =>
+                        {
+                            writeLine("Download Complete. Check the current directory for the new file.\n\n[ press enter to exit ]", "system");
+                            Console.Read();
+                            Application.Exit();
+                        };
+
+                        wc.DownloadFileAsync(new Uri("https://github.com/lyokofirelyte/PseudoCompiler/blob/master/PseudoCompiler.exe?raw=true"), "PseudoCompiler v" + version + ".exe");
+                        Console.Read();
+                        return;
+                    }
+                    else
+                    {
+                        writeLine("You're up to date! Running version " + this.version, "system");
+                    }
+                }
+            } 
+            catch (Exception)
+            {
+                writeLine("Update check failed. No internet or github is down.", "error");
+            }
 
             while (true)
             {
@@ -743,6 +896,19 @@ namespace PseudoCompiler
             }
         }
 
+        private string replaceOperators(string item)
+        {
+            item = item.Replace("NOT", "!=");
+            item = item.Replace("OR", "||");
+            item = item.Replace("AND", "&&");
+
+            item = item.Replace("not", "!=");
+            item = item.Replace("or", "||");
+            item = item.Replace("and", "&&");
+
+            return item;
+        }
+
         private string replaceCommas(string item)
         {
             string newString = "";
@@ -750,7 +916,6 @@ namespace PseudoCompiler
 
             for (int x = 0; x < item.Length; x++)
             {
-
                 char c = item[x];
 
                 if (!isInQuotes)
