@@ -329,6 +329,8 @@ namespace PseudoCompiler
 
                 text[i] = text[i].Replace("False", "false");
                 text[i] = text[i].Replace("True", "true");
+                text[i] = text[i].Replace("Integer", "int");
+                text[i] = text[i].Replace("integer", "int");
 
                 string[] args = text[i].Split(' ');
 

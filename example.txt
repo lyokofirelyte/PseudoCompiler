@@ -1,0 +1,150 @@
+Module main()
+
+// NO REFERENCE VARIABLES! THEY WILL BE TREATED AS NORMAL VARIABLES
+
+// Defining variables
+
+	Set String name = "David"
+	Display name, " is your name"
+
+// Using inputs
+
+	Display "Enter a new name."
+	Input name
+	Display "Your new name is ", name
+
+// Call another module
+
+	Call testModule()
+
+End Module
+
+Module testModule()
+
+	Display "Entering the test module"
+
+// Using a function as an output
+
+	Display showOK()
+
+// Test a user input
+
+	Declare String userEntry
+	Input userEntry
+
+	if "TEST" == userEntry
+		Display "You entered TEST."
+	end if
+
+// Using a do-while (syntax is different here!)
+// Notice how nothing is case sensitive!
+
+	Set int counter = 0
+
+	do-while counter > 0
+		counter--
+		display "count is ", counter
+	end do-while
+
+// Using a for loop without 'step'
+
+	for currentMonth = 1 to 5
+		Display currentMonth
+	end for
+
+// Using a for loop with 'step'
+
+	for currentMonth = 1 to 5 Step currentMonth + 2
+		Display currentMonth
+	end for
+
+	Display counter
+	Set counter = 2
+
+// Using a switch/select statement
+
+	select counter
+		case -1:
+			Display "Yes"
+		break
+		case 2:
+			Display "The counter is 2."
+		break
+	end select
+
+// Using math
+// Notice I didn't delcare x yet. It will still work, but you'll lose points on an assignment!
+
+	Set int x = 20
+	x = x*10
+	Display "X is now ", x
+
+// Function assignments
+
+	Set x = grabX("A")
+	Display x
+	Display grabX("B")
+
+	if (grabX("A") == grabX("C"))
+		Display "The two functions are equal."
+	else
+		Display "The two functions are not equal."
+	end if
+
+// Conditional operator
+// x = 0 IF 5 > 6. Else, set to 1
+
+	Set x = 5 > 6 ? 0 : 1
+	Display x
+
+// Raw C# Code (Advanced Users, Not Required In Class)
+
+	Console.Write("Change terminal color? Y/N:");
+
+	// Remember where the brackets get added automatically from the pseudo-if
+	// so, if becomes if (...) {
+	// And else becomes } else {
+	// So... it's tricky.
+
+	if (Console.ReadLine().Equals("Y"))
+		Console.ForegroundColor = ConsoleColor.Magenta;
+		Console.WriteLine("Testing\none\ntwo\nthree")
+		Console.ForegroundColor = ConsoleColor.White;
+	else
+		Console.WriteLine("Oh well.");
+	}
+
+// Blending C# data type functions with pseudo code
+
+	Display "HELLO".ToLower()
+	Display "hello".ToUpper()
+	Display "Hello".Substring(3)
+
+// ARRAYS COMING SOON, but if you want to use them now...
+
+	string[] str = new string[]{ "Hello", "How are you?" };
+
+	for i = 0 to (str.Length - 1)
+		Display str[i]
+	}
+
+	str[0] = "Goodbye"
+	Display str[0]
+
+End Module
+
+Function String showOK()
+
+	return "OK"
+
+End Function
+
+Function Integer grabX(String input)
+
+	if (input == "A" OR input == "B")
+		return 0
+	else
+		return 1
+	end if
+
+End Function
