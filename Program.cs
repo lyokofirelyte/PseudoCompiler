@@ -846,6 +846,12 @@ namespace PseudoCompiler
 
                         break;
 
+                        case "example":
+
+                            Process.Start("https://github.com/lyokofirelyte/PseudoCompiler/blob/master/example.txt");
+
+                        break;
+
                         case "help":
 
                             Console.Clear();
