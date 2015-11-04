@@ -27,7 +27,7 @@ namespace PseudoCompiler
         private string[] correctedText;
         private string[] settings;
 
-        private string version = "1.4";
+        private string version = "1.4.1";
 
         private static Dictionary<string, string> setting = new Dictionary<string, string>();
 
@@ -433,10 +433,13 @@ namespace PseudoCompiler
                         if (args[1].Contains("]") && args[1].Contains('['))
                         {
                             // Integer intarray[size]
-                            int size = int.Parse(args[1].Substring(args[1].IndexOf('['), args[1].Length - args[1].IndexOf('[')).Replace("[", "").Replace("]", ""));
-                            int[] bleh = new int[size];
-                            Console.WriteLine(args[1].Substring(0, args[1].Length - args[1].IndexOf('[')));
-                            text[i] = args[0] + "[] " + args[1].Substring(0, args[1].IndexOf('[')) + " = new " + args[0] + "[" + size + "]";
+                            try
+                            {
+                                int size = int.Parse(args[1].Substring(args[1].IndexOf('['), args[1].Length - args[1].IndexOf('[')).Replace("[", "").Replace("]", ""));
+                            }
+                            catch (Exception){}
+                            
+                            text[i] = args[0] + "[] " + args[1].Substring(0, args[1].IndexOf('[')) + " = new " + args[0] + "[" + args[1].Substring(args[1].IndexOf('['), args[1].Length - args[1].IndexOf('[')).Replace("[", "").Replace("]", "") + "]";
                         }
 
                         text[i] += ";";
