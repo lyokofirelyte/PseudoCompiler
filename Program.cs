@@ -27,7 +27,7 @@ namespace PseudoCompiler
         private string[] correctedText;
         private string[] settings;
 
-        private string version = "1.3.1";
+        private string version = "1.4";
 
         private static Dictionary<string, string> setting = new Dictionary<string, string>();
 
@@ -331,6 +331,8 @@ namespace PseudoCompiler
                 text[i] = text[i].Replace("True", "true");
                 text[i] = text[i].Replace("Integer", "int");
                 text[i] = text[i].Replace("integer", "int");
+                text[i] = text[i].Replace("Constant", "");
+                text[i] = text[i].Replace("constant", "");
 
                 string[] args = text[i].Split(' ');
 
@@ -340,6 +342,11 @@ namespace PseudoCompiler
 
                         text[i] = text[i].Substring(args[0].Length);
                         text[i] = "public void " + text[i] + "{";
+
+                        if (args[1].ToLower().Equals("main"))
+                        {
+                            text[i] = "public void main() {";
+                        }
                       
                     break;
 
@@ -420,15 +427,19 @@ namespace PseudoCompiler
                         text[i] = text[i].Replace("real", "float");
                         text[i] = text[i].Replace("True", "true");
                         text[i] = text[i].Replace("False", "false");
-                        text[i] += ";";
 
+                        args = text[i].Split(' ');
 
-                        /*if (args.Length >= 3 && args[2].EndsWith("]") && args[2].Contains('['))
+                        if (args[1].Contains("]") && args[1].Contains('['))
                         {
-
+                            // Integer intarray[size]
+                            int size = int.Parse(args[1].Substring(args[1].IndexOf('['), args[1].Length - args[1].IndexOf('[')).Replace("[", "").Replace("]", ""));
+                            int[] bleh = new int[size];
+                            Console.WriteLine(args[1].Substring(0, args[1].Length - args[1].IndexOf('[')));
+                            text[i] = args[0] + "[] " + args[1].Substring(0, args[1].IndexOf('[')) + " = new " + args[0] + "[" + size + "]";
                         }
 
-                        string[] texts = new string[0];*/
+                        text[i] += ";";
 
                     break;
 
@@ -444,7 +455,7 @@ namespace PseudoCompiler
 
                         string header = "> ";
                         text[i] = "Console.Write(" + '"' + header + '"' + ");" + args[1] + " = Console.ReadLine();Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);";
-                        
+
                     break;
 
                     case "while":
@@ -655,7 +666,7 @@ namespace PseudoCompiler
                 Console.WriteLine();
 
                 writeLine("Reference variables do not work (yet?).", "system");
-                writeLine("Arrays & Files coming soon.", "system");
+                writeLine("Files coming soon.", "system");
             } 
             catch (Exception)
             {
