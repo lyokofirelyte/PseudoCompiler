@@ -27,7 +27,7 @@ namespace PseudoCompiler
         private string[] correctedText;
         private string[] settings;
 
-        private string version = "1.4.1";
+        private string version = "1.5";
 
         private static Dictionary<string, string> setting = new Dictionary<string, string>();
 
@@ -311,9 +311,82 @@ namespace PseudoCompiler
                             "new DynaCore().main();",
                         "}",
 
-                        "private void writeLine(string str, string module)",
-                        "{",
-                            "Console.Clear();",
+                        "protected int inputAsInteger(){",
+
+                            "Console.Write(\"> \");",
+
+	                        "try { ",
+		                        "return int.Parse(Console.ReadLine()); ",
+	                       " } catch (Exception){ ",
+		                        "Console.WriteLine(\"Can't convert input to an integer - using 0 instead!\"); ",
+		                        "return 0;",
+	                        "}",
+                        "}",
+
+                        "protected float inputAsReal(){",
+
+                            "Console.Write(\"> \");",
+
+	                        "try { ",
+		                        "return float.Parse(Console.ReadLine()); ",
+	                       " } catch (Exception){ ",
+		                        "Console.WriteLine(\"Can't convert input to a real - using 0 instead!\"); ",
+		                        "return 0;",
+	                        "}",
+                        "}",
+
+                        "protected bool inputAsBoolean(){",
+
+                            "Console.Write(\"> \");",
+
+	                        "try { ",
+		                        "return Boolean.Parse(Console.ReadLine()); ",
+	                       " } catch (Exception){ ",
+		                        "Console.WriteLine(\"Can't convert input to a boolean - using false instead!\"); ",
+		                        "return false;",
+	                        "}",
+                        "}",
+
+                        "protected bool isInteger(string input){",
+
+	                        "try { ",
+		                        "int test = int.Parse(input); ",
+                                "return true;",
+	                       " } catch (Exception){ ",
+		                        "return false; ",
+	                        "}",
+                        "}",
+
+                        "protected bool isReal(string input){",
+
+	                        "try { ",
+		                        "float test = float.Parse(input); ",
+                                "return true;",
+	                       " } catch (Exception){ ",
+		                        "return false; ",
+	                        "}",
+                        "}",
+
+                        "protected bool isBoolean(string input){",
+
+	                        "try { ",
+		                        "bool test = Boolean.Parse(input); ",
+                                "return true;",
+	                       " } catch (Exception){ ",
+		                        "return false; ",
+	                        "}",
+                        "}",
+
+                        "protected int length(string input){",
+                            "return input.Length;",
+                        "}",
+
+                        "protected string toLower(string input){",
+                            "return input.ToLower();",
+                        "}",
+
+                        "protected string toUpper(string input){",
+                            "return input.ToUpper();",
                         "}",
 
                         "%after%", // fill in converted code
@@ -329,8 +402,8 @@ namespace PseudoCompiler
 
                 text[i] = text[i].Replace("False", "false");
                 text[i] = text[i].Replace("True", "true");
-                text[i] = text[i].Replace("Integer", "int");
-                text[i] = text[i].Replace("integer", "int");
+                text[i] = text[i].Replace(" Integer ", " int ");
+                text[i] = text[i].Replace(" integer ", " int ");
                 text[i] = text[i].Replace("Constant", "");
                 text[i] = text[i].Replace("constant", "");
 
@@ -368,6 +441,12 @@ namespace PseudoCompiler
                     case "call":
 
                         text[i] = text[i].Substring(args[0].Length) + ";";
+
+                    break;
+
+                    case "sleep":
+
+                        text[i] = "System.Threading.Thread.Sleep(1000 *" + int.Parse(args[1]) + ");";
 
                     break;
 
@@ -412,7 +491,15 @@ namespace PseudoCompiler
 
                     case "set": case "declare":
 
-                        text[i] = args[1].ToLower();
+                        if (args[0].ToLower().Equals("declare"))
+                        {
+                            text[i] = args[1].ToLower();
+                        }
+                        else
+                        {
+                            text[i] = args[1];
+                        }
+
 
                         for (int x = 2; x < args.Length; x++)
                         {
@@ -432,13 +519,6 @@ namespace PseudoCompiler
 
                         if (args[1].Contains("]") && args[1].Contains('['))
                         {
-                            // Integer intarray[size]
-                            try
-                            {
-                                int size = int.Parse(args[1].Substring(args[1].IndexOf('['), args[1].Length - args[1].IndexOf('[')).Replace("[", "").Replace("]", ""));
-                            }
-                            catch (Exception){}
-                            
                             text[i] = args[0] + "[] " + args[1].Substring(0, args[1].IndexOf('[')) + " = new " + args[0] + "[" + args[1].Substring(args[1].IndexOf('['), args[1].Length - args[1].IndexOf('[')).Replace("[", "").Replace("]", "") + "]";
                         }
 
@@ -449,7 +529,7 @@ namespace PseudoCompiler
                     case "display":
 
                         text[i] = text[i].Substring(args[0].Length);
-                        text[i] = "Console.WriteLine(" + (debug ? "new System.Diagnostics.StackTrace().GetFrame(0).GetMethod().Name + ' ' + '>' + ' ' + " : "\"> \" + ") + text[i] + ");";
+                        text[i] = "Console.WriteLine((" + (debug ? "new System.Diagnostics.StackTrace().GetFrame(0).GetMethod().Name + ' ' + '>' + ' ' + " : "\"> \" + ") + text[i] + ").ToString());";
                         text[i] = replaceCommas(text[i]);
 
                     break;
@@ -565,6 +645,11 @@ namespace PseudoCompiler
                             text[i] += ";";
                         }
 
+                        if (text[i].StartsWith("//"))
+                        {
+                            text[i] = "/*" + text[i] + "*/";
+                        }
+
                     break;
                 }
             }
@@ -669,7 +754,8 @@ namespace PseudoCompiler
                 Console.WriteLine();
 
                 writeLine("Reference variables do not work (yet?).", "system");
-                writeLine("Files coming soon.", "system");
+                writeLine("Need help? Type 'example' to download the demo!", "system");
+                writeLine("You can even run the example.txt!", "system");
             } 
             catch (Exception)
             {
@@ -862,7 +948,21 @@ namespace PseudoCompiler
 
                         case "example":
 
-                            Process.Start("https://github.com/lyokofirelyte/PseudoCompiler/blob/master/example.txt");
+                            WebClient wc = new WebClient();
+
+                            wc.DownloadProgressChanged += (a, b) =>
+                            {
+                                Console.Write("\r" + b.ProgressPercentage.ToString() + " ");
+                            };
+
+                            wc.DownloadFileCompleted += (a, b) =>
+                            {
+                                writeLine("Download Complete. Type 'open' to find and run the example.txt", "system");
+                                Process.Start("example.txt");
+                                Console.WriteLine("[ press enter to continue ]");
+                            };
+
+                            wc.DownloadFileAsync(new Uri("https://raw.githubusercontent.com/lyokofirelyte/PseudoCompiler/master/example.txt"), "example.txt");
 
                         break;
 
