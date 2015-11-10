@@ -1,5 +1,14 @@
 // ============= YOU MUST HAVE A MAIN MODULE =============
 // ============= ALL MODULES MUST HAVE AN END =============
+// ====>>> PLEASE AVOID USING KEY WORDS IN YOUR VARIABLE NAMES <<<====
+// Example: input = "Testing"
+// It will assume you want to input something. Name it something different!
+
+Module changeIt(ref String i)
+
+	set i = "CHANGED"
+
+end Module
 
 Module main()
 
@@ -7,7 +16,12 @@ Display "Hi there, welcome to the demo."
 Display "This entire demo is in pseudo code from example.txt."
 Display "You could have written this if you wanted to!"
 
-// NO REFERENCE VARIABLES! THEY WILL BE TREATED AS NORMAL VARIABLES
+// REFERENCE VARIABLES HAVE AN EXTRA SYNTAX REQUIREMENT!
+
+Declare String Reference myRefVar = "My variable"
+Display "The reference variable is ", myRefVar
+Call changeIt(ref myRefVar)
+Display "Now it is ", myRefVar
 
 // == Using Declare ==
 
@@ -191,6 +205,25 @@ Display "Demo on declaring variables\n"
 	Set name = changeName(name)
 	Display "Now the name is set to ", name
 	Display "It was a bit silly, but it shows how to handle paramaters"
+
+
+// == FILES ==
+
+	Declare OutputFile AppendMode myFile
+	open myFile "testFile.txt"
+	write myFile "Line 1"
+	write myFile "Line 2"
+	close myFile
+
+	Declare InputFile readMyFile
+	open readMyFile "testFile.txt"
+
+	while NOT eof(readMyFile)
+		read readMyFile theText
+		display theText
+	end while
+
+	close readMyFile
 
 // == RAW C# Integration ==
 

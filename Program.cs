@@ -43,7 +43,7 @@ namespace PseudoCompiler
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "1.6";
+        private static string version = "1.6.1";
 
         private Process proc;
 
@@ -645,15 +645,11 @@ namespace PseudoCompiler
 
                     case "open":
 
-                        if (!File.Exists(args[2].Replace("\"", "")))
-                        {
-                            var f = File.Create(args[2].Replace("\"", ""));
-                            f.Close();
-                        }
-
                         text[i] = args[1] + " = " + args[2] + ";";
+                        text[i] += "if (!File.Exists(" + args[2] + ")){ var f = File.Create(" + args[2] + "); f.Close(); }";
                         text[i] += "string[] str" + args[1] + " = File.ReadAllLines(" + args[2] + ");";
                         text[i] += "int index" + args[1] + " = 0;";
+                        text[i] += "index" + args[1] + " = index" + args[1] + " + 0;"; // workaround for compiler error
                         text[i] += "gindex[" + args[1] + "] = 0;";
                         text[i] += "fileSize[" + args[1] + "] = str" + args[1] + ".Length;";
 
@@ -677,17 +673,11 @@ namespace PseudoCompiler
                     case "write":
 
                         string toWrite = args[1];
-
-                        if (!File.Exists(toWrite))
-                        {
-                            var createdFile = File.Create(toWrite);
-                            createdFile.Close();
-                        }
                         string notArray = "";
 
                         for (int w = 2; w < args.Length; w++)
                         {
-                            notArray += args[w] + " ";
+                            notArray += args[w] + (w+1 < args.Length ? " " : "");
                         }
                         
                         notArray = notArray.TrimEnd(new char[] { ' ' });
