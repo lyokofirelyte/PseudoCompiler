@@ -23,35 +23,29 @@ namespace PseudoCompiler
 
         private PseudoEventHandler eventHandler;
 
-        private static string[] text;
         private string[] correctedText;
         private string[] settings;
+        private static string[] text;
 
-        private string version = "1.5";
-
+        private Dictionary<string, int> currentLine = new Dictionary<string, int>();
         private static Dictionary<string, string> setting = new Dictionary<string, string>();
 
-        private List<string> starters = new List<string>();
-
         private bool debug = false;
+        private static bool first = false;
         private static bool allowSettings = false;
         private static bool isInit = false;
 
         private string user = Environment.UserName;
         private string toCompile = "";
         private string name = "";
-        private string suggestions = "";
         private string cDir = "";
+        private static string suggestions = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/suggestions.pseudo";
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
+        private static string version = "1.6";
 
         private Process proc;
-
-        private void clearVariablesForReload()
-        {
-            starters = new List<string>();
-        }
 
         public void modifySetting(string setting, string newValue)
         {
@@ -79,18 +73,21 @@ namespace PseudoCompiler
         static void Main(string[] args)
         {
 
+            PseudoMain.first = false;
+
             if (!isInit)
             {
                 AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
             }
             
-            Console.Title = "PseudoCompiler - READY";
+            Console.Title = "PseudoCompiler v" + version + " - READY";
             allowSettings = File.Exists(settingsFile);
 
             if (!allowSettings)
             {
                 try
                 {
+                    PseudoMain.first = true;
                     Directory.CreateDirectory(settingsDirectory);
                     Directory.CreateDirectory(settingsDirectory + "files");
                     Directory.CreateDirectory(settingsDirectory + "compile");
@@ -103,10 +100,10 @@ namespace PseudoCompiler
 
                     allowSettings = true;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     allowSettings = false;
-                    Console.WriteLine("Could not find settings file - using defaults.", "error");
+                    Console.WriteLine("Could not find settings file - using defaults. Did you run as administrator?", "error");
                 }
 
                 /* Default Settings */
@@ -229,8 +226,6 @@ namespace PseudoCompiler
 
         public void start(string fileName)
         {
-
-            clearVariablesForReload();
             text = File.ReadAllLines(fileName);
             eventHandler = new PseudoEventHandler(this);
             cDir = settingsDirectory.Replace('/', '\\');
@@ -266,17 +261,11 @@ namespace PseudoCompiler
             }
 
             name = fileName;
-            suggestions = fileName.Replace(fileName.Split('\\')[fileName.Split('\\').Length - 1], "corrected.txt");
             correctedText = new string[text.Length];
 
             List<string> parens = new List<string>() // Things that need complete paren sets ( )
             {
                 "module", "function", "method", "call"
-            };
-
-            starters = new List<string>() // Things that need an end
-            {
-                "module", "function", "for", "while", "method", "do-while", "do-until", "if"
             };
 
             for (int i = 0; i < text.Count(); i++)
@@ -296,15 +285,17 @@ namespace PseudoCompiler
 
             foreach (string s in new string[]
             { 
-                "using System; using System.IO;",
+                "using System; using System.IO; using System.Collections.Generic;",
 
                 "namespace DynaCore",
                 "{",
 
                     "public class DynaCore",
                     "{",
-
-                       // "%global%", // global variables
+                    
+                       "private Dictionary<string, int> gindex = new Dictionary<string, int>();",
+                       "private Dictionary<string, int> fileSize = new Dictionary<string, int>();",
+                       "private List<string> appendModes = new List<string>();",
 
                         "public static void Main(string str)",
                         "{",
@@ -377,6 +368,16 @@ namespace PseudoCompiler
 	                        "}",
                         "}",
 
+                        "protected bool eof(string inputFile)",
+                        "{",
+                            "return gindex[inputFile] >= fileSize[inputFile];",
+                        "}",
+
+                        "protected bool EOF(string inputFile)",
+                        "{",
+                            "return eof(inputFile);",
+                        "}",
+
                         "protected int length(string input){",
                             "return input.Length;",
                         "}",
@@ -406,6 +407,9 @@ namespace PseudoCompiler
                 text[i] = text[i].Replace(" integer ", " int ");
                 text[i] = text[i].Replace("Constant", "");
                 text[i] = text[i].Replace("constant", "");
+                text[i] = text[i].Replace(" String ", " string ");
+                text[i] = text[i].Replace("String ", "string ");
+                text[i] = text[i].Replace("Main()", "main()");
 
                 string[] args = text[i].Split(' ');
 
@@ -500,7 +504,6 @@ namespace PseudoCompiler
                             text[i] = args[1];
                         }
 
-
                         for (int x = 2; x < args.Length; x++)
                         {
                             if (!args[x].ToLower().Equals("reference") && !args[x].ToLower().Equals("ref"))
@@ -514,6 +517,20 @@ namespace PseudoCompiler
                         text[i] = text[i].Replace("real", "float");
                         text[i] = text[i].Replace("True", "true");
                         text[i] = text[i].Replace("False", "false");
+                        text[i] = text[i].Replace("InputFile", "string");
+                        text[i] = text[i].Replace("inputfile", "string");
+                        text[i] = text[i].Replace("Inputfile", "string");
+                        text[i] = text[i].Replace("OutputFile", "string");
+                        text[i] = text[i].Replace("outputfile", "string");
+                        text[i] = text[i].Replace("Outputfile", "string");
+
+                        if (args[2].ToLower().Contains("appendmode") && args.Length >= 4)
+                        {
+                            text[i] = "appendModes.Add(\"" + args[3] + "\");" + text[i];
+                            text[i] = text[i].Replace("AppendMode", "");
+                            text[i] = text[i].Replace("Appendmode", "");
+                            text[i] = text[i].Replace("appendmode", "");
+                        }
 
                         args = text[i].Split(' ');
 
@@ -628,14 +645,59 @@ namespace PseudoCompiler
 
                     case "open":
 
-                        string file = settingsDirectory + "files/" + args[1];
-
-                        if (!File.Exists(file))
+                        if (!File.Exists(args[2].Replace("\"", "")))
                         {
-                            var f = File.Create(file);
+                            var f = File.Create(args[2].Replace("\"", ""));
                             f.Close();
                         }
 
+                        text[i] = args[1] + " = " + args[2] + ";";
+                        text[i] += "string[] str" + args[1] + " = File.ReadAllLines(" + args[2] + ");";
+                        text[i] += "int index" + args[1] + " = 0;";
+                        text[i] += "gindex[" + args[1] + "] = 0;";
+                        text[i] += "fileSize[" + args[1] + "] = str" + args[1] + ".Length;";
+
+                    break;
+
+                    case "read":
+
+                        text[i] = "string " + args[2] + " = str" + args[1] + "[index" + args[1] + "];";
+                        text[i] += "gindex[" + args[1] + "] = gindex[" + args[1] + "] + 1;";
+                        text[i] += "index" + args[1] + "++;";
+
+                    break;
+
+                    case "close":
+
+                        text[i] = "gindex.Remove(" + args[1] + ");";
+                        text[i] += "fileSize.Remove(" + args[1] + ");";
+
+                    break;
+
+                    case "write":
+
+                        string toWrite = args[1];
+
+                        if (!File.Exists(toWrite))
+                        {
+                            var createdFile = File.Create(toWrite);
+                            createdFile.Close();
+                        }
+                        string notArray = "";
+
+                        for (int w = 2; w < args.Length; w++)
+                        {
+                            notArray += args[w] + " ";
+                        }
+                        
+                        notArray = notArray.TrimEnd(new char[] { ' ' });
+
+                        text[i] = "if (appendModes.Contains(\"" + toWrite + "\")) {" +
+                                  "using (StreamWriter w = File.AppendText(" + toWrite + ")) {" +
+                                        "w.WriteLine(" + notArray + ");" +
+                                  "}} else { " +
+                                        "File.WriteAllLines(" + toWrite + "," + "new string[]{ " + notArray + "});" +
+                                  "}";
                     break;
 
                     default:
@@ -652,6 +714,21 @@ namespace PseudoCompiler
 
                     break;
                 }
+
+                text[i] = text[i].Replace("string ref ", "ref string ");
+                text[i] = text[i].Replace("int ref ", "ref int ");
+                text[i] = text[i].Replace("float ref ", "ref float ");
+                text[i] = text[i].Replace("bool ref ", "ref bool ");
+
+                text[i] = text[i].Replace("string reference ", "ref string ");
+                text[i] = text[i].Replace("int reference ", "ref int ");
+                text[i] = text[i].Replace("float reference ", "ref float ");
+                text[i] = text[i].Replace("bool reference ", "ref bool ");
+
+                text[i] = text[i].Replace("string Reference ", "ref string ");
+                text[i] = text[i].Replace("int Reference ", "ref int ");
+                text[i] = text[i].Replace("float Reference ", "ref float ");
+                text[i] = text[i].Replace("bool Reference ", "ref bool ");
             }
 
             string newText = "";
@@ -663,12 +740,15 @@ namespace PseudoCompiler
 
             toCompile = toCompile.Replace("%after%", newText);
             toCompile = toCompile.Replace("\n", "");
+            toCompile = toCompile.Replace(";", ";\n");
+            toCompile = toCompile.Replace("}", "}\n");
+            toCompile = toCompile.Replace("{", "{\n");
             File.WriteAllLines(csFile, new string[] { toCompile });
             string phrase = (fileName.Split('\\')[fileName.Split('\\').Length - 1] + " is ready").ToUpper();
             string arrows = "";
 
-            writeLine("Hey " + Environment.UserName + ", welcome to the Pseudo Compiler.", "system");
-            writeLine("View the examples on proper formatting to avoid errors.", "system");
+            writeLine("Hey " + Environment.UserName + ", welcome " + (!PseudoMain.first ? "back " : "") + "to the Pseudo Compiler.", "system");
+            writeLine((PseudoMain.first ? "View the examples on proper formatting to avoid errors." : "Remember to check out the example.txt if you need help!"), "system");
             writeLine("Written in C#!\n", "system");
             
             for (int i = 0; i < phrase.Length; i++)
@@ -709,10 +789,10 @@ namespace PseudoCompiler
                         z++;
                     }
 
-                    if (!version.Equals(this.version))
+                    if (!version.Equals(PseudoMain.version))
                     {
                         writeLine("A new version (" + version + ") is released.", "system");
-                        writeLine("You're only running version " + this.version + ".", "system");
+                        writeLine("You're only running version " + PseudoMain.version + ".", "system");
                         writeLine("Automatically updating...", "system");
                         WebClient wc = new WebClient();
 
@@ -734,11 +814,11 @@ namespace PseudoCompiler
                     }
                     else
                     {
-                        writeLine("You're up to date! Running version " + this.version, "system");
+                        writeLine("You're up to date! Running version " + PseudoMain.version, "system");
 
                         foreach (string f in Directory.GetFiles(Directory.GetCurrentDirectory()))
                         {
-                            if (f.Contains("PseudoCompiler v") && f.EndsWith(".exe") && !f.Contains("PseudoCompiler v" + this.version + ".exe"))
+                            if (f.Contains("PseudoCompiler v") && f.EndsWith(".exe") && !f.Contains("PseudoCompiler v" + PseudoMain.version + ".exe"))
                             {
                                 File.Delete(f);
                                 writeLine("Deleted " + f.Split('\\')[f.Split('\\').Length-1] + " (old version)", "system");
@@ -746,17 +826,36 @@ namespace PseudoCompiler
                         }
                     }
                 }
+                else
+                {
+                    writeLine("You've disabled automatic updating.\n> You could be behind on important fixes!", "system");
+                }
 
                 Console.WriteLine();
-                writeLine("Type 'run' to run your pseudo code.", "system");
-                writeLine("Type 'help' to see all commands.", "system");
-                writeLine("Type 'debug' to see method names.", "system");
+                Console.Write("> Type ");
+                cWrite("run", ConsoleColor.Magenta);
+                Console.WriteLine(" to run your pseudo code.");
+
+                Console.Write("> Type ");
+                cWrite("debug", ConsoleColor.Magenta);
+                Console.WriteLine(" to toggle module names on/off.");
+
+                Console.Write("> Type ");
+                cWrite("settings", ConsoleColor.Magenta);
+                Console.WriteLine(" to change options such as text and background color.");
+
+                Console.Write("> Type ");
+                cWrite("help", ConsoleColor.Magenta);
+                Console.WriteLine(" to see all of the commands you can type.");
                 Console.WriteLine();
 
-                writeLine("Reference variables do not work (yet?).", "system");
-                writeLine("Need help? Type 'example' to download the demo!", "system");
-                writeLine("You can even run the example.txt!", "system");
-            } 
+                writeLine("There is special syntax for reference variables and input.", "system");
+
+                Console.Write("> Please download the new example.txt for v1.6 by typing ");
+                cWrite("example", ConsoleColor.Magenta);
+
+                Console.WriteLine();
+            }
             catch (Exception)
             {
                 writeLine("Update check failed. No internet or github is down.", "error");
@@ -796,7 +895,7 @@ namespace PseudoCompiler
                                 fbd.InitialDirectory = settingsDirectory.Replace('/', '\\');
                                 fbd.ShowDialog();
                             }
-                            catch (Exception botchedFile)
+                            catch (Exception)
                             {
                                 writeLine("Error opening file browser!", "error");
                             }
@@ -948,6 +1047,7 @@ namespace PseudoCompiler
 
                         case "example":
 
+                             
                             WebClient wc = new WebClient();
 
                             wc.DownloadProgressChanged += (a, b) =>
@@ -1070,12 +1170,24 @@ namespace PseudoCompiler
             }
         }
 
+        private void cWrite(string toWrite, ConsoleColor color)
+        {
+            ConsoleColor old = Console.ForegroundColor;
+            Console.ForegroundColor = color;
+            Console.Write(toWrite);
+            Console.ForegroundColor = old;
+        }
+
         private string replaceOperators(string item)
         {
+            item = item.Replace("NOT eof", "!eof");
+            item = item.Replace("NOT EOF", "!eof");
             item = item.Replace("NOT", "!=");
             item = item.Replace("OR", "||");
             item = item.Replace("AND", "&&");
 
+            item = item.Replace("not eof", "!eof");
+            item = item.Replace("not EOF", "!eof");
             item = item.Replace("not", "!=");
             item = item.Replace("or", "||");
             item = item.Replace("and", "&&");
