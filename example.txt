@@ -214,13 +214,14 @@ Display "Demo on declaring variables\n"
 
 // == FILES ==
 
-	Declare OutputFile AppendMode myFile
+	Declare OutputFile myFile
 	open myFile "testFile.txt"
 	write myFile "Line 1"
 	write myFile "Line 2"
 	close myFile
 
 	Declare InputFile readMyFile
+	Declare String theText
 	open readMyFile "testFile.txt"
 
 	while NOT eof(readMyFile)

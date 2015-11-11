@@ -677,7 +677,7 @@ namespace PseudoCompiler
 
                     case "read":
 
-                        text[i] = "string " + args[2] + " = str" + args[1] + "[index" + args[1] + "];";
+                        text[i] = args[2] + " = str" + args[1] + "[index" + args[1] + "];";
                         text[i] += "gindex[" + args[1] + "] = gindex[" + args[1] + "] + 1;";
                         text[i] += "index" + args[1] + "++;";
 
@@ -708,11 +708,11 @@ namespace PseudoCompiler
                         
                         notArray = notArray.TrimEnd(new char[] { ' ' });
 
-                        text[i] = "if (appendModes.Contains(\"" + toWrite + "\")) {" +
+
+                        text[i] = "if (!appendModes.Contains(\"" + toWrite + "\")) {" +
+                                    "File.WriteAllText(" + toWrite + ", string.Empty ); appendModes.Add(\"" + toWrite + "\");}" +
                                   "using (StreamWriter w = File.AppendText(" + toWrite + ")) {" +
                                         "w.WriteLine(" + notArray + ");" +
-                                  "}} else { " +
-                                        "File.WriteAllLines(" + toWrite + "," + "new string[]{ " + notArray + "});" +
                                   "}";
                     break;
 
@@ -1204,6 +1204,7 @@ namespace PseudoCompiler
 
             item = item.Replace("not eof", "!eof");
             item = item.Replace("not EOF", "!eof");
+            item = item.Replace("Not EOF", "!eof");
             item = item.Replace("not", "!=");
             item = item.Replace("or", "||");
             item = item.Replace("and", "&&");

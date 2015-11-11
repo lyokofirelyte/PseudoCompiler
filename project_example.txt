@@ -2,7 +2,6 @@ Module main()
 
 	Declare String items[5]
 	Declare Integer amounts[5]
-	Declare String whoCaresAboutThisVariable
 
 	while selectionMenu(ref items, ref amounts)
 	end while
@@ -31,7 +30,7 @@ Function boolean selectionMenu(ref String[] items, ref Integer[] amounts)
 
 			Call buy(ref items, ref amounts)
 
-		break;
+		break
 
 		case "exit":
 
@@ -41,7 +40,7 @@ Function boolean selectionMenu(ref String[] items, ref Integer[] amounts)
 
 			Call display(ref items, ref amounts, 5)
 
-		break;
+		break
 
 		default:
 			Display "That's not a valid option."
