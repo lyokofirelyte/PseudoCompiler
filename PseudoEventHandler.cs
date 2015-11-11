@@ -105,9 +105,10 @@ namespace PseudoCompiler
 
                 break;
 
-                case "author":
+                case "update":
 
-                    //Process.Start("mailto:dtossber@purduecal.edu");
+                    main.modifySetting("update", main.getSetting("update").Equals("automatic") ? "disabled" : "automatic");
+                    clicked.Text = main.getSetting("update");
 
                 break;
 

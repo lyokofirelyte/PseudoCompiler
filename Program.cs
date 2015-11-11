@@ -43,7 +43,7 @@ namespace PseudoCompiler
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "1.6.1";
+        private static string version = "1.6.2";
 
         private Process proc;
 
@@ -305,37 +305,49 @@ namespace PseudoCompiler
                         "protected int inputAsInteger(){",
 
                             "Console.Write(\"> \");",
+                            "int input = 0;",
 
 	                        "try { ",
-		                        "return int.Parse(Console.ReadLine()); ",
+		                        "input = int.Parse(Console.ReadLine()); ",
+                                "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
 	                       " } catch (Exception){ ",
+                                "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
 		                        "Console.WriteLine(\"Can't convert input to an integer - using 0 instead!\"); ",
-		                        "return 0;",
 	                        "}",
+
+                            "return input;",
                         "}",
 
                         "protected float inputAsReal(){",
 
                             "Console.Write(\"> \");",
+                            "float input = 0;",
 
 	                        "try { ",
-		                        "return float.Parse(Console.ReadLine()); ",
+		                        "input = float.Parse(Console.ReadLine()); ",
+                                "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
 	                       " } catch (Exception){ ",
+                                "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
 		                        "Console.WriteLine(\"Can't convert input to a real - using 0 instead!\"); ",
-		                        "return 0;",
 	                        "}",
+
+                            "return input;",
                         "}",
 
                         "protected bool inputAsBoolean(){",
 
                             "Console.Write(\"> \");",
+                            "bool input = false;",
 
 	                        "try { ",
-		                        "return Boolean.Parse(Console.ReadLine()); ",
+		                        "input = Boolean.Parse(Console.ReadLine()); ",
+                                "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
 	                       " } catch (Exception){ ",
+                                "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
 		                        "Console.WriteLine(\"Can't convert input to a boolean - using false instead!\"); ",
-		                        "return false;",
 	                        "}",
+
+                            "return input;",
                         "}",
 
                         "protected bool isInteger(string input){",
@@ -405,11 +417,17 @@ namespace PseudoCompiler
                 text[i] = text[i].Replace("True", "true");
                 text[i] = text[i].Replace(" Integer ", " int ");
                 text[i] = text[i].Replace(" integer ", " int ");
+                text[i] = text[i].Replace(" Integer[] ", " int[] ");
+                text[i] = text[i].Replace(" integer[] ", " int[] ");
                 text[i] = text[i].Replace("Constant", "");
                 text[i] = text[i].Replace("constant", "");
                 text[i] = text[i].Replace(" String ", " string ");
                 text[i] = text[i].Replace("String ", "string ");
+                text[i] = text[i].Replace(" String[] ", " string[] ");
+                text[i] = text[i].Replace("String[] ", "string[] ");
                 text[i] = text[i].Replace("Main()", "main()");
+                text[i] = text[i].Replace(" boolean ", " bool ");
+                text[i] = text[i].Replace("boolean ", "bool ");
 
                 string[] args = text[i].Split(' ');
 
@@ -513,8 +531,10 @@ namespace PseudoCompiler
                         }
 
                         text[i] = text[i].Replace("boolean", "bool");
+                        text[i] = text[i].Replace("boolean[]", "bool[]");
                         text[i] = text[i].Replace("integer", "int");
                         text[i] = text[i].Replace("real", "float");
+                        text[i] = text[i].Replace("real[]", "float[]");
                         text[i] = text[i].Replace("True", "true");
                         text[i] = text[i].Replace("False", "false");
                         text[i] = text[i].Replace("InputFile", "string");
@@ -660,6 +680,12 @@ namespace PseudoCompiler
                         text[i] = "string " + args[2] + " = str" + args[1] + "[index" + args[1] + "];";
                         text[i] += "gindex[" + args[1] + "] = gindex[" + args[1] + "] + 1;";
                         text[i] += "index" + args[1] + "++;";
+
+                    break;
+
+                    case "clear":
+
+                        text[i] = "Console.Clear();";
 
                     break;
 

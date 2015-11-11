@@ -21,41 +21,9 @@ namespace PseudoCompiler
 {
     class GenUtils
     {
-        public static Bitmap ResizeImage(Image image, int width, int height)
-        {
-            var destRect = new Rectangle(0, 0, width, height);
-            var destImage = new Bitmap(width, height);
-
-            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
-
-            using (var graphics = Graphics.FromImage(destImage))
-            {
-                graphics.CompositingMode = CompositingMode.SourceCopy;
-                graphics.CompositingQuality = CompositingQuality.HighQuality;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode = SmoothingMode.HighQuality;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-                using (var wrapMode = new ImageAttributes())
-                {
-                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
-                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
-                }
-            }
-
-            return destImage;
-        }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int SystemParametersInfo(UInt32 uAction, int uParam, string lpvParam, int fuWinIni);
-
-        public static Image getDesktopWallpaper()
-        {
-            string currentWallpaper = new string('\0', 260);
-            GenUtils.SystemParametersInfo(0x73, currentWallpaper.Length, currentWallpaper, 0);
-            string wall = currentWallpaper.Substring(0, currentWallpaper.IndexOf('\0'));
-            return Image.FromFile(wall);
-        }
 
         public partial class FancyLabel : Label
         {
@@ -87,7 +55,8 @@ namespace PseudoCompiler
 
             if (compile.Errors.HasErrors)
             {
-                Console.WriteLine(compile.Errors[compile.Errors.Count - 1]);
+                Console.WriteLine("There is an issue with your code. Here's what happened:");
+                Console.WriteLine(compile.Errors[compile.Errors.Count - 1].ToString().Substring(compile.Errors[compile.Errors.Count - 1].ToString().IndexOf('(')));
                 return;
             }
 

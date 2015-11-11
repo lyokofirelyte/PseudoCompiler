@@ -107,6 +107,11 @@ Display "Demo on declaring variables\n"
 	// case "math": case "science": case "computers": without breaks will run ALL of them!
 	// The default statement means "anything else"
 
+	// I have included a 'clear' command to clear the console all at once.
+	Clear
+	// That's it, just type 'clear'.
+	Display "Console cleared."
+
 // == If statements ==
 
 	Display "Pop quiz! What was the default name?"
@@ -225,9 +230,47 @@ Display "Demo on declaring variables\n"
 
 	close readMyFile
 
+// something something menu driven programs
+
+// ==========================================================
+// END ACTUAL "YOU SHOULD KNOW THIS" CODE
+// ==========================================================
+
+// ==========================================================
+// BEGIN OPTIONAL CODE
+// ==========================================================
+
+// == Extra Libraries ==
+// Shh, don't tell anyone I added these!
+
+	// == Strings
+	// toUpper(String input), toLower(String input)
+	// array.Contains("value") returns true/false if "value" is in array
+	
+	// == Validation
+	// isBoolean(String input) returns true/false if input is a boolean
+	// isInteger(String input) returns true/false if input is an integer
+	// isReal(String input) returns true/false if input is a real
+	// variable.ToString() convert variable into a string
+
+	// == Input Gathering
+	// inputAsInteger() returns user input as an integer value
+	// inputAsReal() returns user input as a real value
+	// inputAsBoolean() returns user input as a boolean value
+
+	// == Conditional Operator
+	// boolean condition = ...
+	// String result = condition ? "answer" : "other answer"
+	// If condition is true, go with "answer". Otherwise, take "other answer".
+
+	// Also, anything built into .NET 4.0 should work just fine.
+	// You could change your desktop wallpaper from a URL if you really wanted to.
+
 // == RAW C# Integration ==
+// You don't need to know this, it's just for fun!
 
 	Display "You can mix c# into your code if you know how to."
+	Display "This is an example of C# optional code for fun!"
 	Display "Would you like to see rainbows? [Y/N]"
 	Display "WARNING: FLASHING COLORS"
 
@@ -235,7 +278,7 @@ Display "Demo on declaring variables\n"
         Array arr = Enum.GetValues(typeof(ConsoleColor));
         Random rand = new Random();
 
-        for (int x = 0; x < 20; x++)
+        for (int x = 0; x < 5; x++)
         {
             int sel = rand.Next(arr.Length);
             Console.ForegroundColor = (ConsoleColor)arr.GetValue(sel);

@@ -1,0 +1,118 @@
+Module main()
+
+	Declare String items[5]
+	Declare Integer amounts[5]
+	Declare String whoCaresAboutThisVariable
+
+	while selectionMenu(ref items, ref amounts)
+	end while
+
+	Display "Goodbye."
+
+end main
+
+Function boolean selectionMenu(ref String[] items, ref Integer[] amounts)
+
+	Declare String userInput
+	Display "=-= VEND-TEC =-="
+	Display "fill // buy // display // exit"
+	input userInput
+	userInput = toLower(userInput)
+
+	select userInput
+
+		case "fill":
+
+			Call fill(ref items, ref amounts, 5)
+
+		break
+
+		case "buy":
+
+			Call buy(ref items, ref amounts)
+
+		break;
+
+		case "exit":
+
+		return false
+
+		case "display":
+
+			Call display(ref items, ref amounts, 5)
+
+		break;
+
+		default:
+			Display "That's not a valid option."
+		break
+
+	end select
+
+	return true
+
+End selectionMenu
+
+Module buy(ref string[] items, ref integer[] amounts)
+
+	Declare String gatherInput
+	Declare Integer howMany = 0
+	Display "Type the name of the item to buy."
+	input gatherInput
+
+	Declare integer index = getIndex(gatherInput, items)
+
+	if getIndex(gatherInput, items) != -1
+		Display "Okay, how many would you like to buy?"
+		howMany = inputAsInteger()
+		if howMany <= amounts[index]
+			Display "Okay!"
+			amounts[index] -= howMany
+		else
+			Display "No can do! There's not enough in stock."
+		end if
+	else
+		Display "Sorry, we don't have that item."
+	end if
+
+end buy
+
+Function Integer getIndex(String item, string[] array)
+
+	for index = 0 to array.Length-1
+		if array[index] == item
+			return index
+		end if
+	end for
+
+	return -1
+
+end getIndex
+
+Module display(ref string[] items, ref integer[] amounts, integer size)
+
+	for index = 0 to size-1
+		Display items[index], " <-> ", amounts[index]
+	end for
+
+end display
+
+Module fill(ref string[] items, ref integer[] amounts, integer size)
+
+	Declare String userInput
+	Declare Integer userInputAmount
+
+	for index = 0 to size-1
+		Display "=== === ==="
+		Display "What is the name of item ", index, "?"
+		input userInput
+		items[index] = userInput
+		Display "And how many are in stock?"
+		userInputAmount = inputAsInteger()
+		amounts[index] = userInputAmount
+		Display "=== === ==="
+	end for
+
+	Display "The vending machine is now filled."
+
+end fill
