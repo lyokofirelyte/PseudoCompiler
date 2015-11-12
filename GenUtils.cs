@@ -22,6 +22,13 @@ namespace PseudoCompiler
     class GenUtils
     {
 
+        private PseudoMain main;
+
+        public GenUtils(PseudoMain instance)
+        {
+            this.main = instance;
+        }
+
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int SystemParametersInfo(UInt32 uAction, int uParam, string lpvParam, int fuWinIni);
 
@@ -37,7 +44,7 @@ namespace PseudoCompiler
             }
         }
 
-        public static void CompileAndRun(string[] code)
+        public void CompileAndRun(string[] code)
         {
             CompilerParameters CompilerParams = new CompilerParameters();
             string outputDirectory = Directory.GetCurrentDirectory();
@@ -56,7 +63,15 @@ namespace PseudoCompiler
             if (compile.Errors.HasErrors)
             {
                 Console.WriteLine("There is an issue with your code. Here's what happened:");
-                Console.WriteLine(compile.Errors[compile.Errors.Count - 1].ToString().Substring(compile.Errors[compile.Errors.Count - 1].ToString().IndexOf('(')));
+                string error = compile.Errors[compile.Errors.Count - 1].ToString().Substring(compile.Errors[compile.Errors.Count - 1].ToString().IndexOf('('));
+                Console.WriteLine(error);
+                int number = int.Parse(error.Split(',')[0].Substring(1));
+                Console.WriteLine("" + number);
+                Console.WriteLine("This is somewhere in and around the below area... ish.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(findLine(number));
+                Console.ForegroundColor = (ConsoleColor) Enum.Parse(typeof(ConsoleColor), PseudoMain.setting["fcolor"], true);
+                Console.WriteLine();
                 return;
             }
 
@@ -78,6 +93,38 @@ namespace PseudoCompiler
             {
                 methInfo.Invoke(null, new object[] { "Test" });
             }
+        }
+
+        public string findLine(int line)
+        {
+
+            int csline = main.lineSave[line];
+            string first = "";
+
+            if (csline - 2 >= 0)
+            {
+                first += main.correctedText[csline - 2];
+            }
+
+            if (csline - 1 >= 0)
+            {
+                first += "\n" + main.correctedText[csline - 1];
+            }
+
+
+            first += (!first.Equals("") ? "\n" : "") + main.correctedText[csline];
+
+            if (main.correctedText.Length > csline + 1)
+            {
+                first += "\n" + main.correctedText[csline + 1];
+            }
+
+            if (main.correctedText.Length > csline + 2)
+            {
+                first += "\n" + main.correctedText[csline + 2];
+            }
+
+            return first;
         }
 
         public static ColorRGB HSL2RGB(double h, double sl, double l)

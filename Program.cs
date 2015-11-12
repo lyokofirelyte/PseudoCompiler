@@ -22,28 +22,30 @@ namespace PseudoCompiler
     {
 
         private PseudoEventHandler eventHandler;
+        private GenUtils utils;
 
-        private string[] correctedText;
-        private string[] settings;
-        private static string[] text;
+        public string[] correctedText;
+        public string[] text;
+        public string[] settings;
 
+        public static Dictionary<string, string> setting = new Dictionary<string, string>();
+        public Dictionary<int, int> lineSave = new Dictionary<int, int>();
         private Dictionary<string, int> currentLine = new Dictionary<string, int>();
-        private static Dictionary<string, string> setting = new Dictionary<string, string>();
 
         private bool debug = false;
         private static bool first = false;
         private static bool allowSettings = false;
         private static bool isInit = false;
 
+        public string toCompile = "";
         private string user = Environment.UserName;
-        private string toCompile = "";
         private string name = "";
         private string cDir = "";
         private static string suggestions = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/suggestions.pseudo";
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "1.6.2";
+        private static string version = "1.6.4";
 
         private Process proc;
 
@@ -226,8 +228,10 @@ namespace PseudoCompiler
 
         public void start(string fileName)
         {
+            lineSave = new Dictionary<int, int>();
             text = File.ReadAllLines(fileName);
             eventHandler = new PseudoEventHandler(this);
+            utils = new GenUtils(this);
             cDir = settingsDirectory.Replace('/', '\\');
 
             if (proc != null)
@@ -412,7 +416,6 @@ namespace PseudoCompiler
 
             for (int i = 0; i < text.Count(); i++)
             {
-
                 text[i] = text[i].Replace("False", "false");
                 text[i] = text[i].Replace("True", "true");
                 text[i] = text[i].Replace(" Integer ", " int ");
@@ -539,9 +542,11 @@ namespace PseudoCompiler
                         text[i] = text[i].Replace("False", "false");
                         text[i] = text[i].Replace("InputFile", "string");
                         text[i] = text[i].Replace("inputfile", "string");
+                        text[i] = text[i].Replace("inputFile", "string");
                         text[i] = text[i].Replace("Inputfile", "string");
                         text[i] = text[i].Replace("OutputFile", "string");
                         text[i] = text[i].Replace("outputfile", "string");
+                        text[i] = text[i].Replace("outputFile", "string");
                         text[i] = text[i].Replace("Outputfile", "string");
 
                         if (args[2].ToLower().Contains("appendmode") && args.Length >= 4)
@@ -716,6 +721,8 @@ namespace PseudoCompiler
                                   "}";
                     break;
 
+                    case "default:": break;
+                        
                     default:
 
                         if (text[i].TrimStart(new char[] { ' ' }).Length > 1 && !text[i].Contains(';') && !text[i].StartsWith("//") && !text[i].StartsWith("*/"))
@@ -725,7 +732,7 @@ namespace PseudoCompiler
 
                         if (text[i].StartsWith("//"))
                         {
-                            text[i] = "/*" + text[i] + "*/";
+                            text[i] = "/* " + text[i] + " */";
                         }
 
                     break;
@@ -745,6 +752,8 @@ namespace PseudoCompiler
                 text[i] = text[i].Replace("int Reference ", "ref int ");
                 text[i] = text[i].Replace("float Reference ", "ref float ");
                 text[i] = text[i].Replace("bool Reference ", "ref bool ");
+
+                text[i] = " %line_start: " + i + "%" + text[i] + " %line_end: " + i + "% ";
             }
 
             string newText = "";
@@ -755,10 +764,33 @@ namespace PseudoCompiler
             }
 
             toCompile = toCompile.Replace("%after%", newText);
-            toCompile = toCompile.Replace("\n", "");
+            //toCompile = toCompile.Replace("\n", "");
             toCompile = toCompile.Replace(";", ";\n");
             toCompile = toCompile.Replace("}", "}\n");
             toCompile = toCompile.Replace("{", "{\n");
+            toCompile = toCompile.Replace("*/", "*/\n");
+
+            string[] theStrings = toCompile.Split('\n');
+
+            for (int qq = 0; qq < theStrings.Length; qq++)
+            {
+                string checking = theStrings[qq];
+                for (int q = 0; q < theStrings.Length; q++)
+                {
+                    if (checking.Contains("%line_start: " + q + "%"))
+                    {
+                        lineSave.Add(qq, q);
+                        break;
+                    }
+                }
+            }
+
+            for (int q = 0; q < theStrings.Length; q++)
+            {
+                toCompile = toCompile.Replace("%line_start: " + q + "%", "");
+                toCompile = toCompile.Replace("%line_end: " + q + "%", "");
+            }
+
             File.WriteAllLines(csFile, new string[] { toCompile });
             string phrase = (fileName.Split('\\')[fileName.Split('\\').Length - 1] + " is ready").ToUpper();
             string arrows = "";
@@ -1036,7 +1068,7 @@ namespace PseudoCompiler
                             Console.Clear();
                             Console.Title = "PseudoCompiler - RUNNING";
 
-                            GenUtils.CompileAndRun(new string[] { toCompile });
+                            utils.CompileAndRun(new string[] { toCompile });
 
                             Console.Title = "PseudoCompiler - READY";
                             writeLine("----", "system");
