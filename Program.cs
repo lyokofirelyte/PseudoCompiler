@@ -45,7 +45,7 @@ namespace PseudoCompiler
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "1.6.4.1";
+        private static string version = "1.6.5";
 
         private Process proc;
 
@@ -422,8 +422,6 @@ namespace PseudoCompiler
                 text[i] = text[i].Replace(" integer ", " int ");
                 text[i] = text[i].Replace(" Integer[] ", " int[] ");
                 text[i] = text[i].Replace(" integer[] ", " int[] ");
-                text[i] = text[i].Replace("Constant", "");
-                text[i] = text[i].Replace("constant", "");
                 text[i] = text[i].Replace(" String ", " string ");
                 text[i] = text[i].Replace("String ", "string ");
                 text[i] = text[i].Replace(" String[] ", " string[] ");
@@ -516,7 +514,7 @@ namespace PseudoCompiler
 
                     case "set": case "declare": case "constant":
 
-                        if (args[0].ToLower().Equals("declare"))
+                        if (args[0].ToLower().Equals("declare") || args[0].ToLower().Equals("constant"))
                         {
                             text[i] = args[1].ToLower();
                         }
