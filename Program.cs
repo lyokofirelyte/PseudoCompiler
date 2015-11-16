@@ -45,7 +45,7 @@ namespace PseudoCompiler
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "1.6.4";
+        private static string version = "1.6.4.1";
 
         private Process proc;
 
@@ -514,7 +514,7 @@ namespace PseudoCompiler
 
                     break;
 
-                    case "set": case "declare":
+                    case "set": case "declare": case "constant":
 
                         if (args[0].ToLower().Equals("declare"))
                         {
