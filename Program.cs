@@ -45,7 +45,7 @@ namespace PseudoCompiler
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "1.6.5";
+        private static string version = "1.6.6";
 
         private Process proc;
 
@@ -876,36 +876,36 @@ namespace PseudoCompiler
                 {
                     writeLine("You've disabled automatic updating.\n> You could be behind on important fixes!", "system");
                 }
-
-                Console.WriteLine();
-                Console.Write("> Type ");
-                cWrite("run", ConsoleColor.Magenta);
-                Console.WriteLine(" to run your pseudo code.");
-
-                Console.Write("> Type ");
-                cWrite("debug", ConsoleColor.Magenta);
-                Console.WriteLine(" to toggle module names on/off.");
-
-                Console.Write("> Type ");
-                cWrite("settings", ConsoleColor.Magenta);
-                Console.WriteLine(" to change options such as text and background color.");
-
-                Console.Write("> Type ");
-                cWrite("help", ConsoleColor.Magenta);
-                Console.WriteLine(" to see all of the commands you can type.");
-                Console.WriteLine();
-
-                writeLine("There is special syntax for reference variables and input.", "system");
-
-                Console.Write("> Please download the new example.txt for v1.6 by typing ");
-                cWrite("example", ConsoleColor.Magenta);
-
-                Console.WriteLine();
             }
             catch (Exception)
             {
                 writeLine("Update check failed. No internet or github is down.", "error");
             }
+
+            Console.WriteLine();
+            Console.Write("> Type ");
+            cWrite("run", ConsoleColor.Magenta);
+            Console.WriteLine(" to run your pseudo code.");
+
+            Console.Write("> Type ");
+            cWrite("debug", ConsoleColor.Magenta);
+            Console.WriteLine(" to toggle module names on/off.");
+
+            Console.Write("> Type ");
+            cWrite("settings", ConsoleColor.Magenta);
+            Console.WriteLine(" to change options such as text and background color.");
+
+            Console.Write("> Type ");
+            cWrite("help", ConsoleColor.Magenta);
+            Console.WriteLine(" to see all of the commands you can type.");
+            Console.WriteLine();
+
+            writeLine("There is special syntax for reference variables and input.", "system");
+
+            Console.Write("> Please download the new example.txt for v1.6 by typing ");
+            cWrite("example", ConsoleColor.Magenta);
+
+            Console.WriteLine();
 
             while (true)
             {
