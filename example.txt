@@ -24,7 +24,6 @@ Call changeIt(ref myRefVar)
 Display "Now it is ", myRefVar
 
 Declare String testString
-Declare String testString
 
 // == Using Declare ==
 
