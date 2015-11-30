@@ -23,6 +23,9 @@ Display "The reference variable is ", myRefVar
 Call changeIt(ref myRefVar)
 Display "Now it is ", myRefVar
 
+Declare String testString
+Declare String testString
+
 // == Using Declare ==
 
 Display "Demo on declaring variables\n"

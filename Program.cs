@@ -45,7 +45,7 @@ namespace PseudoCompiler
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "1.6.6";
+        private static string version = "1.6.6.1";
 
         private Process proc;
 
@@ -1228,16 +1228,16 @@ namespace PseudoCompiler
         {
             item = item.Replace("NOT eof", "!eof");
             item = item.Replace("NOT EOF", "!eof");
-            item = item.Replace("NOT", "!=");
-            item = item.Replace("OR", "||");
-            item = item.Replace("AND", "&&");
+            item = item.Replace(" NOT ", " != ");
+            item = item.Replace(" OR ", " || ");
+            item = item.Replace(" AND ", " && ");
 
             item = item.Replace("not eof", "!eof");
             item = item.Replace("not EOF", "!eof");
             item = item.Replace("Not EOF", "!eof");
-            item = item.Replace("not", "!=");
-            item = item.Replace("or", "||");
-            item = item.Replace("and", "&&");
+            item = item.Replace(" not ", " != ");
+            item = item.Replace(" or ", " || ");
+            item = item.Replace(" and ", " && ");
 
             return item;
         }
