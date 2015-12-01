@@ -20,13 +20,28 @@ namespace PseudoCompiler
 {
     class PseudoMain
     {
-
         private PseudoEventHandler eventHandler;
         private GenUtils utils;
 
         public string[] correctedText;
         public string[] text;
         public string[] settings;
+        public string[] commands = new string[]
+        {
+            "run | run | Run your pseudo code from the file you provided.",
+            "view example | example | View an example I drew up for the class.",
+            "reload file | reload | Reload the current file if you made changes.",
+            "about | about | What is this program? Who made it?",
+            "debug mode | debugs | Show some extra information about your modules.",
+            "settings | settings | Change some cool settings like color and manage updates.",
+            "open new file | open | Change the file without closing the program.",
+            "view root files | root | View the data the compiler stores on your computer.",
+            "suggestions (beta) | suggestions | This fixes your parens, but that's about it.",
+            "view source code | source | View the awesome source code for this project!",
+            "recent changes | changelog | View a poorly documented list of changes.",
+            "dev console | dev | For those hidden commands no one cares about.",
+            "exit | exit | I wonder what this does?"
+        };
 
         public static Dictionary<string, string> setting = new Dictionary<string, string>();
         public Dictionary<int, int> lineSave = new Dictionary<int, int>();
@@ -37,15 +52,20 @@ namespace PseudoCompiler
         private static bool allowSettings = false;
         private static bool isInit = false;
 
+        private int globalIndex = 0;
+        private int globalTop = 0;
+
         public string toCompile = "";
         private string user = Environment.UserName;
         private string name = "";
         private string cDir = "";
+        private string globalChoice = "";
+        private static string latestChangeHardCodedBecauseLazy = "Better Menu, if/else bug fix, var name collision fix";
         private static string suggestions = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/suggestions.pseudo";
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "1.6.6.1";
+        private static string version = "2.0";
 
         private Process proc;
 
@@ -71,17 +91,117 @@ namespace PseudoCompiler
             return PseudoMain.setting.ContainsKey(setting);
         }
 
+        private string[] getCommandInfo(int i)
+        {
+            return Regex.Split(commands[i], @" \| ");
+        }
+
+        private string read(bool main)
+        {
+            string input = "";
+
+            while (true)
+            {
+                if (Console.KeyAvailable)
+                {
+                    ConsoleKeyInfo key = Console.ReadKey(main);
+
+                    if (main)
+                    {
+                        switch (key.Key)
+                        {
+                            case ConsoleKey.UpArrow: case ConsoleKey.DownArrow:
+                            case ConsoleKey.LeftArrow: case ConsoleKey.RightArrow:
+
+                                globalIndex = (key.Key == ConsoleKey.DownArrow || key.Key == ConsoleKey.RightArrow) ? (globalIndex + 1 < commands.Length ? globalIndex + 1 : 0) : (globalIndex - 1 >= 0 ? globalIndex - 1 : commands.Length - 1);
+                                Console.SetCursorPosition(0, globalTop);
+
+                                for (int i = 0; i < commands.Length; i++)
+                                {
+                                    if (i == globalIndex)
+                                    {
+                                        Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                                        Console.WriteLine("[ " + getCommandInfo(i)[0] + " ]");
+
+                                        try
+                                        {
+                                            Console.BackgroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), setting["bcolor"], true);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            Console.BackgroundColor = ConsoleColor.Black;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine(" " + getCommandInfo(i)[0] + "     ");
+                                    }
+                                }
+
+                                Console.Write("\r\n\r> " + getCommandInfo(globalIndex)[2] + "                              ");
+
+                            break;
+
+                            case ConsoleKey.Enter:
+
+                                globalChoice = getCommandInfo(globalIndex)[1];
+
+                            return "done";
+
+                            case ConsoleKey.Home:
+
+                                Process.Start(new ProcessStartInfo(Application.ExecutablePath, name));
+                                Environment.Exit(0);
+
+                            return "exit";
+                        }
+                    }
+                    else
+                    {
+                        switch (key.Key)
+                        {
+                            case ConsoleKey.Home:
+
+                                Process.Start(new ProcessStartInfo(Application.ExecutablePath, name));
+                                Environment.Exit(0);
+
+                            return "exit";
+
+                            case ConsoleKey.Enter: return input;
+
+                            case ConsoleKey.Backspace:
+
+                                if (input.Length > 0)
+                                {
+                                    input = input.Substring(0, input.Length - 1);
+                                    Console.Write(" \b");
+                                }
+                                else
+                                {
+                                    Console.SetCursorPosition(Console.CursorLeft + 1, Console.CursorTop);
+                                }
+
+                            break;
+
+                            default:
+                                input += key.KeyChar;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         [STAThread]
         static void Main(string[] args)
         {
-
             PseudoMain.first = false;
 
             if (!isInit)
             {
                 AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
             }
-            
+
             Console.Title = "PseudoCompiler v" + version + " - READY";
             allowSettings = File.Exists(settingsFile);
 
@@ -184,7 +304,7 @@ namespace PseudoCompiler
 
             Console.Write("\n" + user + "@pseudo-root:~$ ");
 
-            string input = Console.ReadLine();
+            string input = read(false);
 
             if (debug)
             {
@@ -202,26 +322,26 @@ namespace PseudoCompiler
             {
                 string[] split = setting.Split('~');
                 PseudoMain.setting[split[0].ToLower()] = split[1];
-                
+
                 switch (split[0].ToLower())
                 {
                     case "debugs":
 
                         debug = Boolean.Parse(split[1]);
 
-                    break;
+                        break;
 
                     case "fcolor":
 
-                        Console.ForegroundColor = (ConsoleColor) Enum.Parse(typeof(ConsoleColor), split[1], true);
+                        Console.ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), split[1], true);
 
-                    break;
+                        break;
 
                     case "bcolor":
 
                         Console.BackgroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), split[1], true);
 
-                    break;
+                        break;
                 }
             }
         }
@@ -288,7 +408,7 @@ namespace PseudoCompiler
             File.WriteAllLines(suggestions, correctedText);
 
             foreach (string s in new string[]
-            { 
+            {
                 "using System; using System.IO; using System.Collections.Generic;",
 
                 "namespace DynaCore",
@@ -296,10 +416,56 @@ namespace PseudoCompiler
 
                     "public class DynaCore",
                     "{",
-                    
+
                        "private Dictionary<string, int> gindex = new Dictionary<string, int>();",
                        "private Dictionary<string, int> fileSize = new Dictionary<string, int>();",
                        "private List<string> appendModes = new List<string>();",
+                       "private string PSEUDO_APP_NAME = @\"" + name + "\";",
+                       "private string PSEUDO_APP_PATH = @\"" + Application.ExecutablePath + "\";",
+
+                       "private string read()",
+                        "{",
+                            "string input = \"\";",
+
+                            "while (true)",
+                            "{",
+                                "if (Console.KeyAvailable)",
+                               " {",
+                                    "ConsoleKeyInfo key = Console.ReadKey();",
+                                    "switch (key.Key)",
+                                    "{",
+                                        "case ConsoleKey.Home:",
+
+                                            "System.Diagnostics.Process.Start(PSEUDO_APP_PATH, PSEUDO_APP_NAME);",
+                                            "Environment.Exit(0);",
+
+                                            "return \"exit\";",
+
+                                        "case ConsoleKey.Enter: Console.Write(\"                                     \");",
+                    
+                                        "return input;",
+
+                                        "case ConsoleKey.Backspace:",
+
+                                            "if (input.Length > 0)",
+                                            "{",
+                                                "input = input.Substring(0, input.Length - 1);",
+                                                "Console.Write(\" \\b\");",
+                                            "}",
+                                            "else",
+                                            "{",
+                                                "Console.SetCursorPosition(Console.CursorLeft + 1, Console.CursorTop);",
+                                            "}",
+
+                                            "break;",
+
+                                        "default:",
+                                            "input += key.KeyChar;",
+                                            "break;",
+                                    "}",
+                                "}",
+                            "}",
+                        "}",
 
                         "public static void Main(string str)",
                         "{",
@@ -311,13 +477,13 @@ namespace PseudoCompiler
                             "Console.Write(\"> \");",
                             "int input = 0;",
 
-	                        "try { ",
-		                        "input = int.Parse(Console.ReadLine()); ",
+                            "try { ",
+                                "input = int.Parse(read()); ",
                                 "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
-	                       " } catch (Exception){ ",
+                           " } catch (Exception){ ",
                                 "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
-		                        "Console.WriteLine(\"Can't convert input to an integer - using 0 instead!\"); ",
-	                        "}",
+                                "Console.WriteLine(\"Can't convert input to an integer - using 0 instead!\"); ",
+                            "}",
 
                             "return input;",
                         "}",
@@ -327,13 +493,13 @@ namespace PseudoCompiler
                             "Console.Write(\"> \");",
                             "float input = 0;",
 
-	                        "try { ",
-		                        "input = float.Parse(Console.ReadLine()); ",
+                            "try { ",
+                                "input = float.Parse(read()); ",
                                 "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
-	                       " } catch (Exception){ ",
+                           " } catch (Exception){ ",
                                 "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
-		                        "Console.WriteLine(\"Can't convert input to a real - using 0 instead!\"); ",
-	                        "}",
+                                "Console.WriteLine(\"Can't convert input to a real - using 0 instead!\"); ",
+                            "}",
 
                             "return input;",
                         "}",
@@ -343,45 +509,45 @@ namespace PseudoCompiler
                             "Console.Write(\"> \");",
                             "bool input = false;",
 
-	                        "try { ",
-		                        "input = Boolean.Parse(Console.ReadLine()); ",
+                            "try { ",
+                                "input = Boolean.Parse(read()); ",
                                 "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
-	                       " } catch (Exception){ ",
+                           " } catch (Exception){ ",
                                 "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);",
-		                        "Console.WriteLine(\"Can't convert input to a boolean - using false instead!\"); ",
-	                        "}",
+                                "Console.WriteLine(\"Can't convert input to a boolean - using false instead!\"); ",
+                            "}",
 
                             "return input;",
                         "}",
 
                         "protected bool isInteger(string input){",
 
-	                        "try { ",
-		                        "int test = int.Parse(input); ",
+                            "try { ",
+                                "int test = int.Parse(input); ",
                                 "return true;",
-	                       " } catch (Exception){ ",
-		                        "return false; ",
-	                        "}",
+                           " } catch (Exception){ ",
+                                "return false; ",
+                            "}",
                         "}",
 
                         "protected bool isReal(string input){",
 
-	                        "try { ",
-		                        "float test = float.Parse(input); ",
+                            "try { ",
+                                "float test = float.Parse(input); ",
                                 "return true;",
-	                       " } catch (Exception){ ",
-		                        "return false; ",
-	                        "}",
+                           " } catch (Exception){ ",
+                                "return false; ",
+                            "}",
                         "}",
 
                         "protected bool isBoolean(string input){",
 
-	                        "try { ",
-		                        "bool test = Boolean.Parse(input); ",
+                            "try { ",
+                                "bool test = Boolean.Parse(input); ",
                                 "return true;",
-	                       " } catch (Exception){ ",
-		                        "return false; ",
-	                        "}",
+                           " } catch (Exception){ ",
+                                "return false; ",
+                            "}",
                         "}",
 
                         "protected bool eof(string inputFile)",
@@ -411,30 +577,45 @@ namespace PseudoCompiler
                 "}"
             })
             {
-               toCompile += s;
+                toCompile += s;
             }
 
             for (int i = 0; i < text.Count(); i++)
             {
                 text[i] = text[i].Replace("False", "false");
+                text[i] = text[i].Replace("FALSE", "false");
                 text[i] = text[i].Replace("True", "true");
+                text[i] = text[i].Replace("TRUE", "true");
                 text[i] = text[i].Replace(" Integer ", " int ");
+                text[i] = text[i].Replace("Integer ", "int ");
+                text[i] = text[i].Replace(" Integer", " int");
                 text[i] = text[i].Replace(" integer ", " int ");
                 text[i] = text[i].Replace(" Integer[] ", " int[] ");
+                text[i] = text[i].Replace("Integer[] ", "int[] ");
+                text[i] = text[i].Replace(" Integer[]", " int[]");
                 text[i] = text[i].Replace(" integer[] ", " int[] ");
                 text[i] = text[i].Replace(" String ", " string ");
                 text[i] = text[i].Replace("String ", "string ");
+                text[i] = text[i].Replace(" String", " string");
                 text[i] = text[i].Replace(" String[] ", " string[] ");
+                text[i] = text[i].Replace(" String[]", " string[]");
+                text[i] = text[i].Replace("String[] ", "string[] ");
                 text[i] = text[i].Replace("String[] ", "string[] ");
                 text[i] = text[i].Replace("Main()", "main()");
                 text[i] = text[i].Replace(" boolean ", " bool ");
+                text[i] = text[i].Replace(" boolean", " bool");
                 text[i] = text[i].Replace("boolean ", "bool ");
+                text[i] = text[i].Replace(" Boolean", " bool");
+                text[i] = text[i].Replace("boolean ", "bool ");
+                text[i] = text[i].Replace("Boolean ", "bool ");
+                text[i] = text[i].Replace(" Boolean ", " bool ");
 
                 string[] args = text[i].Split(' ');
 
                 switch (args[0].ToLower())
                 {
-                    case "module": case "begin": // Module changeName() --> private void changeName(){
+                    case "module":
+                    case "begin": // Module changeName() --> private void changeName(){
 
                         text[i] = text[i].Substring(args[0].Length);
                         text[i] = "public void " + text[i] + "{";
@@ -443,8 +624,8 @@ namespace PseudoCompiler
                         {
                             text[i] = "public void main() {";
                         }
-                      
-                    break;
+
+                        break;
 
                     case "function": // Function String changeName() --> private String changeName(){
 
@@ -453,36 +634,37 @@ namespace PseudoCompiler
                         toLower = toLower.ToLower().Replace("boolean", "bool");
                         text[i] = "public " + toLower.ToLower() + text[i].Substring(toLower.Length) + "{";
 
-                    break;
+                        break;
 
                     case "end": // End Module --> }
 
                         text[i] = "}";
 
-                    break;
+                        break;
 
                     case "call":
 
                         text[i] = text[i].Substring(args[0].Length) + ";";
 
-                    break;
+                        break;
 
                     case "sleep":
 
                         text[i] = "System.Threading.Thread.Sleep(1000 *" + int.Parse(args[1]) + ");";
 
-                    break;
+                        break;
 
                     case "else":
 
-                        if (args.Length >= 2 && args[1].Equals("if"))
+
+                        if ((args.Length >= 2 && args[1].ToLower().Equals("if")) || text[i].ToLower().Contains("else if"))
                         {
                             text[i] = "} " + text[i];
 
                             if (!text[i].Contains('('))
                             {
-                                text[i] = text[i].Substring(args[0].Length);
-                                text[i] = "if (" + text[i] + ")";
+                                text[i] = text[i].Substring(9);
+                                text[i] = "} else if (" + text[i] + ")";
                             }
 
                             text[i] += "{";
@@ -495,7 +677,7 @@ namespace PseudoCompiler
                             text[i] = "} else {";
                         }
 
-                    break;
+                        break;
 
                     case "if":
 
@@ -510,9 +692,11 @@ namespace PseudoCompiler
                         text[i] = text[i].Replace(" then", "");
                         text[i] = text[i].Replace(" Then", "");
 
-                    break;
+                        break;
 
-                    case "set": case "declare": case "constant":
+                    case "set":
+                    case "declare":
+                    case "constant":
 
                         if (args[0].ToLower().Equals("declare") || args[0].ToLower().Equals("constant"))
                         {
@@ -564,7 +748,7 @@ namespace PseudoCompiler
 
                         text[i] += ";";
 
-                    break;
+                        break;
 
                     case "display":
 
@@ -572,12 +756,13 @@ namespace PseudoCompiler
                         text[i] = "Console.WriteLine((" + (debug ? "new System.Diagnostics.StackTrace().GetFrame(0).GetMethod().Name + ' ' + '>' + ' ' + " : "\"> \" + ") + text[i] + ").ToString());";
                         text[i] = replaceCommas(text[i]);
 
-                    break;
+                        break;
 
                     case "input":
 
                         string header = "> ";
-                        text[i] = "Console.Write(" + '"' + header + '"' + ");" + args[1] + " = Console.ReadLine();Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);";
+                        text[i] = "Console.Write(" + '"' + header + '"' + ");" + args[1] + " = read();";
+                        text[i] += "Console.SetCursorPosition(0, Console.CursorTop - 1);Console.Write(new string(' ', Console.WindowWidth));Console.SetCursorPosition(0, Console.CursorTop-1);";
 
                     break;
 
@@ -591,7 +776,7 @@ namespace PseudoCompiler
                         text[i] += "{";
                         text[i] = replaceOperators(text[i]);
 
-                    break;
+                        break;
 
                     case "do-while": // for people who are too lazy to condition their while loops correctly.
 
@@ -609,7 +794,7 @@ namespace PseudoCompiler
                         text[i] = "bool doWhileBool" + i + " = false;" + text[i];
                         text[i] = replaceOperators(text[i]);
 
-                    break;
+                        break;
 
                     case "for": // So, the pseudo syntax is actually 87% more confusing than the normal syntax.
 
@@ -622,8 +807,8 @@ namespace PseudoCompiler
                             text[i] = text[i].Replace(" To ", "; " + firstVar + " <= ");
                             if (text[i].ToLower().Contains(" step "))
                             {
-                                text[i] = text[i].Replace(" Step ", "; " + firstVar + " = (");
-                                text[i] = text[i].Replace(" step ", "; " + firstVar + " = (");
+                                text[i] = text[i].Replace(" Step ", "; " + firstVar + " += (");
+                                text[i] = text[i].Replace(" step ", "; " + firstVar + " += (");
                                 text[i] += ")){";
                             }
                             else
@@ -633,9 +818,10 @@ namespace PseudoCompiler
                             }
                         }
 
-                    break;
+                        break;
 
-                    case "break": case "return":
+                    case "break":
+                    case "return":
 
                         if (!text[i].EndsWith(";"))
                         {
@@ -644,27 +830,27 @@ namespace PseudoCompiler
 
                         text[i] = replaceCommas(text[i]);
 
-                    break;
+                        break;
 
                     case "select":
 
                         text[i] = text[i].Substring(args[0].Length);
                         text[i] = "switch (" + text[i] + "){";
 
-                    break;
+                        break;
 
                     case "case":
 
                         text[i] = text[i].Substring(args[0].Length);
                         text[i] = "case" + text[i];
 
-                    break;
+                        break;
 
                     case "//":
 
                         text[i] = "/*" + text[i] + "*/";
 
-                    break;
+                        break;
 
                     case "open":
 
@@ -676,7 +862,7 @@ namespace PseudoCompiler
                         text[i] += "gindex[" + args[1] + "] = 0;";
                         text[i] += "fileSize[" + args[1] + "] = str" + args[1] + ".Length;";
 
-                    break;
+                        break;
 
                     case "read":
 
@@ -684,20 +870,20 @@ namespace PseudoCompiler
                         text[i] += "gindex[" + args[1] + "] = gindex[" + args[1] + "] + 1;";
                         text[i] += "index" + args[1] + "++;";
 
-                    break;
+                        break;
 
                     case "clear":
 
                         text[i] = "Console.Clear();";
 
-                    break;
+                        break;
 
                     case "close":
 
                         text[i] = "gindex.Remove(" + args[1] + ");";
                         text[i] += "fileSize.Remove(" + args[1] + ");";
 
-                    break;
+                        break;
 
                     case "write":
 
@@ -706,9 +892,9 @@ namespace PseudoCompiler
 
                         for (int w = 2; w < args.Length; w++)
                         {
-                            notArray += args[w] + (w+1 < args.Length ? " " : "");
+                            notArray += args[w] + (w + 1 < args.Length ? " " : "");
                         }
-                        
+
                         notArray = notArray.TrimEnd(new char[] { ' ' });
 
 
@@ -717,10 +903,10 @@ namespace PseudoCompiler
                                   "using (StreamWriter w = File.AppendText(" + toWrite + ")) {" +
                                         "w.WriteLine(" + notArray + ");" +
                                   "}";
-                    break;
+                        break;
 
                     case "default:": break;
-                        
+
                     default:
 
                         if (text[i].TrimStart(new char[] { ' ' }).Length > 1 && !text[i].Contains(';') && !text[i].StartsWith("//") && !text[i].StartsWith("*/"))
@@ -733,13 +919,28 @@ namespace PseudoCompiler
                             text[i] = "/* " + text[i] + " */";
                         }
 
-                    break;
+                        break;
                 }
 
                 text[i] = text[i].Replace("string ref ", "ref string ");
                 text[i] = text[i].Replace("int ref ", "ref int ");
                 text[i] = text[i].Replace("float ref ", "ref float ");
                 text[i] = text[i].Replace("bool ref ", "ref bool ");
+
+                text[i] = text[i].Replace("string[] ref ", "ref string[] ");
+                text[i] = text[i].Replace("int[] ref ", "ref int[] ");
+                text[i] = text[i].Replace("float[] ref ", "ref float[] ");
+                text[i] = text[i].Replace("bool[] ref ", "ref bool[] ");
+
+                text[i] = text[i].Replace("string[] Ref ", "ref string[] ");
+                text[i] = text[i].Replace("int[] Ref ", "ref int[] ");
+                text[i] = text[i].Replace("float[] Ref ", "ref float[] ");
+                text[i] = text[i].Replace("bool[] Ref ", "ref bool[] ");
+
+                text[i] = text[i].Replace("string Ref ", "ref string ");
+                text[i] = text[i].Replace("int Ref ", "ref int ");
+                text[i] = text[i].Replace("float Ref ", "ref float ");
+                text[i] = text[i].Replace("bool Ref ", "ref bool ");
 
                 text[i] = text[i].Replace("string reference ", "ref string ");
                 text[i] = text[i].Replace("int reference ", "ref int ");
@@ -750,6 +951,9 @@ namespace PseudoCompiler
                 text[i] = text[i].Replace("int Reference ", "ref int ");
                 text[i] = text[i].Replace("float Reference ", "ref float ");
                 text[i] = text[i].Replace("bool Reference ", "ref bool ");
+
+                text[i] = text[i].Replace("If", "if");
+                text[i] = text[i].Replace("Else", "else");
 
                 text[i] = " %line_start: " + i + "%" + text[i] + " %line_end: " + i + "% ";
             }
@@ -790,13 +994,11 @@ namespace PseudoCompiler
             }
 
             File.WriteAllLines(csFile, new string[] { toCompile });
-            string phrase = (fileName.Split('\\')[fileName.Split('\\').Length - 1] + " is ready").ToUpper();
+            string phrase = ("Welcome " + Environment.UserName + "! " + fileName.Split('\\')[fileName.Split('\\').Length - 1] + " is ready").ToUpper();
             string arrows = "";
 
-            writeLine("Hey " + Environment.UserName + ", welcome " + (!PseudoMain.first ? "back " : "") + "to the Pseudo Compiler.", "system");
-            writeLine((PseudoMain.first ? "View the examples on proper formatting to avoid errors." : "Remember to check out the example.txt if you need help!"), "system");
-            writeLine("Written in C#!\n", "system");
-            
+           // writeLine("Hi " + Environment.UserName + ", welcome " + (!PseudoMain.first ? "back " : "") + "to the Pseudo Compiler.", "system");
+
             for (int i = 0; i < phrase.Length; i++)
             {
                 arrows += "=";
@@ -861,13 +1063,14 @@ namespace PseudoCompiler
                     else
                     {
                         writeLine("You're up to date! Running version " + PseudoMain.version, "system");
+                        writeLine("The latest change was: " + latestChangeHardCodedBecauseLazy, "system");
 
                         foreach (string f in Directory.GetFiles(Directory.GetCurrentDirectory()))
                         {
                             if (f.Contains("PseudoCompiler v") && f.EndsWith(".exe") && !f.Contains("PseudoCompiler v" + PseudoMain.version + ".exe"))
                             {
                                 File.Delete(f);
-                                writeLine("Deleted " + f.Split('\\')[f.Split('\\').Length-1] + " (old version)", "system");
+                                writeLine("Deleted " + f.Split('\\')[f.Split('\\').Length - 1] + " (old version)", "system");
                             }
                         }
                     }
@@ -882,242 +1085,284 @@ namespace PseudoCompiler
                 writeLine("Update check failed. No internet or github is down.", "error");
             }
 
-            Console.WriteLine();
-            Console.Write("> Type ");
-            cWrite("run", ConsoleColor.Magenta);
-            Console.WriteLine(" to run your pseudo code.");
+            Console.WriteLine("\n> You can press the Home key at any time to reload (even while your code is running)");
+            Console.WriteLine("> Use your arrow keys to select an option. Press enter to confirm.");
+            /* Console.Write("> Type ");
+             cWrite("run", ConsoleColor.Magenta);
+             Console.WriteLine(" to run your pseudo code.");
 
-            Console.Write("> Type ");
-            cWrite("debug", ConsoleColor.Magenta);
-            Console.WriteLine(" to toggle module names on/off.");
+             Console.Write("> Type ");
+             cWrite("debug", ConsoleColor.Magenta);
+             Console.WriteLine(" to toggle module names on/off.");
 
-            Console.Write("> Type ");
-            cWrite("settings", ConsoleColor.Magenta);
-            Console.WriteLine(" to change options such as text and background color.");
+             Console.Write("> Type ");
+             cWrite("settings", ConsoleColor.Magenta);
+             Console.WriteLine(" to change options such as text and background color.");
 
-            Console.Write("> Type ");
-            cWrite("help", ConsoleColor.Magenta);
-            Console.WriteLine(" to see all of the commands you can type.");
-            Console.WriteLine();
+             Console.Write("> Type ");
+             cWrite("help", ConsoleColor.Magenta);
+             Console.WriteLine(" to see all of the commands you can type.");
+             Console.WriteLine();
 
-            writeLine("There is special syntax for reference variables and input.", "system");
+             writeLine("There is special syntax for reference variables and input.", "system");
 
-            Console.Write("> Please download the new example.txt for v1.6 by typing ");
-            cWrite("example", ConsoleColor.Magenta);
+             Console.Write("> Please download the new example.txt for v1.6 by typing ");
+             cWrite("example", ConsoleColor.Magenta);
 
-            Console.WriteLine();
+             Console.WriteLine();*/
 
-            while (true)
+            outputMenu();
+
+            while (!read(true).Equals("done")){}
+
+            string str = "";
+
+            if (globalChoice.Equals("dev"))
             {
-                string str = awaitInput();
+                str = awaitInput();
+            }
+            else
+            {
+                str = globalChoice;
+            }
 
-                if (str.Equals("exit"))
+            manageInputs(str, fileName);
+        }
+
+        private void outputMenu()
+        {
+            Console.WriteLine("\n= - = - = - = - = - = - =\nPseudo Compiler Main Menu\n= - = - = - = - = - = - =\n");
+            Console.BackgroundColor = ConsoleColor.DarkMagenta;
+            globalTop = Console.CursorTop;
+            globalIndex = 0;
+            Console.WriteLine("[ " + getCommandInfo(0)[0] + " ]");
+
+            try
+            {
+                Console.BackgroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), setting["bcolor"], true);
+            }
+            catch (Exception)
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+            }
+
+            for (int i = 1; i < commands.Length; i++)
+            {
+                Console.WriteLine(" " + getCommandInfo(i)[0]);
+            }
+
+            Console.Write("\r\n\r> " + getCommandInfo(globalIndex)[2] + "                              \n");
+        }
+
+        private void manageInputs(string str, string fileName)
+        {
+            if (str.Equals("exit"))
+            {
+                System.Environment.Exit(0);
+            }
+            else
+            {
+                switch (str.Split(' ')[0].Trim(new char[] { ' ' }))
                 {
-                    System.Environment.Exit(0);
-                }
-                else
-                {
-                    switch (str.Split(' ')[0])
-                    {
-                        case "open":
+                    case "open":
 
-                            OpenFileDialog ofd = new OpenFileDialog();
+                        OpenFileDialog ofd = new OpenFileDialog();
 
-                            if (ofd.ShowDialog() == DialogResult.OK)
-                            {
-                                Console.Clear();
-                                Main(new string[1]{ ofd.FileName });
-                                return;
-                            }
-
-                        break;
-
-                        case "root":
-                            
-                            try
-                            {
-                                OpenFileDialog fbd = new OpenFileDialog();
-                                fbd.Title = "View Pseudo Files";
-                                fbd.InitialDirectory = settingsDirectory.Replace('/', '\\');
-                                fbd.ShowDialog();
-                            }
-                            catch (Exception)
-                            {
-                                writeLine("Error opening file browser!", "error");
-                            }
-
-                        break;
-
-                        case "update":
-
-                            modifySetting("update", getSetting("update").Equals("automatic") ? "disabled" : "automatic");
-                            writeLine("Update setting changed to: " + getSetting("update"), "system");
-
-                        break;
-
-                        case "settings": // unnecessary fancy settings menu, must have in every program!
-
-                            Form settingsForm = new Form();
-
-                            Panel panel = new Panel();
-                            panel.BackColor = Color.LightSlateGray;
-                            panel.Dock = DockStyle.Fill;
-                            panel.AutoSize = false;
-                            panel.Size = new Size(300, 330);
-
-                            settingsForm.FormBorderStyle = FormBorderStyle.FixedSingle;
-                            settingsForm.Text = "Global Pseudo Settings";
-                            settingsForm.AutoScaleMode = AutoScaleMode.Font;
-                            settingsForm.AutoSize = false;
-                            settingsForm.Size = panel.Size;
-                            settingsForm.MaximizeBox = false;
-                            settingsForm.MinimizeBox = false;
-
-                            int yAmt = 0;
-                            
-                            foreach (string set in setting.Keys)
-                            {
-                                GenUtils.FancyLabel l = new GenUtils.FancyLabel()
-                                {
-                                    Name = set,
-                                    Location = new Point(5, settingsForm.Location.Y + yAmt + 5),
-                                    AutoSize = true,
-                                    Text = set.ToLower(),
-                                    Font = new Font("Courier New", 20),
-                                    BackColor = Color.Purple,
-                                    ForeColor = Color.White,
-                                    TextAlign = ContentAlignment.MiddleCenter,
-                                    Parent = panel
-                                };
-
-                                Control cont = (Control)l; // A little cheaty method to get it to accept a mouse over
-                                cont.MouseDown += new MouseEventHandler(eventHandler.onMouseDown);
-                                cont.MouseEnter += new EventHandler(eventHandler.focusGained);
-                                cont.MouseLeave += new EventHandler(eventHandler.focusLost);
-
-                                panel.Controls.Add(l);
-                                l.Visible = true;
-                                l.BringToFront();
-                                yAmt += 10 + l.Height;
-                            }
-
-                            settingsForm.Controls.Add(panel);
-                            settingsForm.Visible = true;
-
-                            Application.Run(settingsForm);
+                        if (ofd.ShowDialog() == DialogResult.OK)
+                        {
                             Console.Clear();
-                            saveSettings();
-                            Main(new string[1] { fileName });
+                            Main(new string[1] { ofd.FileName });
+                            return;
+                        }
+
+                        break;
+
+                    case "root":
+
+                        try
+                        {
+                            OpenFileDialog fbd = new OpenFileDialog();
+                            fbd.Title = "View Pseudo Files";
+                            fbd.InitialDirectory = settingsDirectory.Replace('/', '\\');
+                            fbd.ShowDialog();
+                        }
+                        catch (Exception)
+                        {
+                            writeLine("Error opening file browser!", "error");
+                        }
+
+                        break;
+
+                    case "update":
+
+                        modifySetting("update", getSetting("update").Equals("automatic") ? "disabled" : "automatic");
+                        writeLine("Update setting changed to: " + getSetting("update"), "system");
+
+                        break;
+
+                    case "settings": // unnecessary fancy settings menu, must have in every program!
+
+                        Form settingsForm = new Form();
+
+                        Panel panel = new Panel();
+                        panel.BackColor = Color.LightSlateGray;
+                        panel.Dock = DockStyle.Fill;
+                        panel.AutoSize = false;
+                        panel.Size = new Size(300, 330);
+
+                        settingsForm.FormBorderStyle = FormBorderStyle.FixedSingle;
+                        settingsForm.Text = "Global Pseudo Settings";
+                        settingsForm.AutoScaleMode = AutoScaleMode.Font;
+                        settingsForm.AutoSize = false;
+                        settingsForm.Size = panel.Size;
+                        settingsForm.MaximizeBox = false;
+                        settingsForm.MinimizeBox = false;
+
+                        int yAmt = 0;
+
+                        foreach (string set in setting.Keys)
+                        {
+                            GenUtils.FancyLabel l = new GenUtils.FancyLabel()
+                            {
+                                Name = set,
+                                Location = new Point(5, settingsForm.Location.Y + yAmt + 5),
+                                AutoSize = true,
+                                Text = set.ToLower(),
+                                Font = new Font("Courier New", 20),
+                                BackColor = Color.Purple,
+                                ForeColor = Color.White,
+                                TextAlign = ContentAlignment.MiddleCenter,
+                                Parent = panel
+                            };
+
+                            Control cont = (Control)l; // A little cheaty method to get it to accept a mouse over
+                            cont.MouseDown += new MouseEventHandler(eventHandler.onMouseDown);
+                            cont.MouseEnter += new EventHandler(eventHandler.focusGained);
+                            cont.MouseLeave += new EventHandler(eventHandler.focusLost);
+
+                            panel.Controls.Add(l);
+                            l.Visible = true;
+                            l.BringToFront();
+                            yAmt += 10 + l.Height;
+                        }
+
+                        settingsForm.Controls.Add(panel);
+                        settingsForm.Visible = true;
+
+                        Application.Run(settingsForm);
+                        Console.Clear();
+                        saveSettings();
+                        Main(new string[1] { fileName });
 
                         return;
 
-                        case "reload":
+                    case "reload":
 
-                            Console.Clear();
-                            Main(new string[1] { fileName });
+                        Console.Clear();
+                        Main(new string[1] { fileName });
 
                         return;
 
-                        case "changelog":
+                    case "changelog":
 
-                            Process.Start("https://github.com/lyokofirelyte/PseudoCompiler/commits/master");
+                        Process.Start("https://github.com/lyokofirelyte/PseudoCompiler/commits/master");
 
                         break;
 
-                        case "suggestions":
+                    case "suggestions":
 
-                            if (File.Exists(suggestions))
+                        if (File.Exists(suggestions))
+                        {
+                            string[] txt = File.ReadAllLines(suggestions);
+                            int i = 1; // I was tempted to leave this at 0, but alas...
+                            bool found = false;
+
+                            foreach (string t in txt)
                             {
-                                string[] txt = File.ReadAllLines(suggestions);
-                                int i = 1; // I was tempted to leave this at 0, but alas...
-                                bool found = false;
+                                if (t.Contains("[system]"))
+                                {
+                                    writeLine("Suggestion @ line " + i, "system");
+                                    writeLine(t.Replace("[system]", ""), "read");
+                                    writeLine("... ... ...", "system");
+                                    found = true;
+                                }
+                                i++;
+                            }
 
-                                foreach (string t in txt)
-                                {
-                                    if (t.Contains("[system]"))
-                                    {
-                                        writeLine("Suggestion @ line " + i, "system");
-                                        writeLine(t.Replace("[system]", ""), "read");
-                                        writeLine("... ... ...", "system");
-                                        found = true;
-                                    }
-                                    i++;
-                                }
-
-                                if (!found)
-                                {
-                                    writeLine("No suggestions found! Good job!", "system");
-                                }
-                                else
-                                {
-                                    proc.StartInfo.Arguments = "/c notepad " + suggestions;
-                                    proc.Start();
-                                }
+                            if (!found)
+                            {
+                                writeLine("No suggestions found! Good job!", "system");
                             }
                             else
                             {
-                                writeLine("The suggestions file appears to be missing.", "error");
+                                proc.StartInfo.Arguments = "/c notepad " + suggestions;
+                                proc.Start();
                             }
+                        }
+                        else
+                        {
+                            writeLine("The suggestions file appears to be missing.", "error");
+                        }
 
                         break;
 
-                        case "run":
+                    case "run":
 
-                            Console.Clear();
-                            Console.Title = "PseudoCompiler - RUNNING";
+                        Console.Clear();
+                        Console.Title = "PseudoCompiler - RUNNING";
 
-                            utils.CompileAndRun(new string[] { toCompile });
+                        utils.CompileAndRun(new string[] { toCompile });
 
-                            Console.Title = "PseudoCompiler - READY";
-                            writeLine("----", "system");
-                            writeLine("Code finished. Type 'help' for a list of commands.", "system");
-                            writeLine("Remember to view the suggestions if your code didn't work out well.", "system");
+                        Console.Title = "PseudoCompiler - READY";
+                        writeLine("----", "system");
+                        writeLine("Code finished. Type 'help' for a list of commands.", "system");
+                        writeLine("Remember to view the suggestions if your code didn't work out well.", "system");
 
                         break;
 
-                        case "debug":
+                    case "debug":
 
-                            Console.Clear();
-                            debug = !debug;
-                            setting["debugs"] = debug + "";
-                            saveSettings();
-                            Main(new string[1] { fileName });
+                        Console.Clear();
+                        debug = !debug;
+                        setting["debugs"] = debug + "";
+                        saveSettings();
+                        Main(new string[1] { fileName });
 
                         return;
 
-                        case "source":
+                    case "source":
 
-                            Process.Start("https://github.com/lyokofirelyte/PseudoCompiler");
-
-                        break;
-
-                        case "example":
-
-                             
-                            WebClient wc = new WebClient();
-
-                            wc.DownloadProgressChanged += (a, b) =>
-                            {
-                                Console.Write("\r" + b.ProgressPercentage.ToString() + " ");
-                            };
-
-                            wc.DownloadFileCompleted += (a, b) =>
-                            {
-                                writeLine("Download Complete. Type 'open' to find and run the example.txt", "system");
-                                Process.Start("example.txt");
-                                Console.WriteLine("[ press enter to continue ]");
-                            };
-
-                            wc.DownloadFileAsync(new Uri("https://raw.githubusercontent.com/lyokofirelyte/PseudoCompiler/master/example.txt"), "example.txt");
+                        Process.Start("https://github.com/lyokofirelyte/PseudoCompiler");
 
                         break;
 
-                        case "help":
+                    case "example":
 
-                            Console.Clear();
 
-                            foreach (string s in new string[] 
-                            {
+                        WebClient wc = new WebClient();
+
+                        wc.DownloadProgressChanged += (a, b) =>
+                        {
+                            Console.Write("\r" + b.ProgressPercentage.ToString() + " ");
+                        };
+
+                        wc.DownloadFileCompleted += (a, b) =>
+                        {
+                            writeLine("Download Complete. Type 'open' to find and run the example.txt", "system");
+                            Process.Start("example.txt");
+                            Console.WriteLine("[ press enter to continue ]");
+                        };
+
+                        wc.DownloadFileAsync(new Uri("https://raw.githubusercontent.com/lyokofirelyte/PseudoCompiler/master/example.txt"), "example.txt");
+
+                        break;
+
+                    case "help":
+
+                        Console.Clear();
+
+                        foreach (string s in new string[]
+                        {
                                 "> Pseudo Compiler Commands <",
                                 "--- --- --- --- --- --- ---",
                                 "",
@@ -1138,18 +1383,19 @@ namespace PseudoCompiler
                                 "",
                                 "--- --- --- --- --- --- ---",
                                 "Most Windows CMD commands will also work, such as dir, ipconfig, ping, etc."
-                            }){
-                                Console.WriteLine(s);
-                            }
-                                    
+                        })
+                        {
+                            Console.WriteLine(s);
+                        }
+
                         break;
 
-                        case "about":
+                    case "about":
 
                         Console.Clear();
 
-                            foreach (string s in new string[] 
-                            {
+                        foreach (string s in new string[]
+                        {
                                  "> Pseudo Compiler Information <",
                                  "--- --- --- --- --- --- ---",
                                  "",
@@ -1167,51 +1413,73 @@ namespace PseudoCompiler
                                  "I only import System for basic pseudo stuff.",
                                  "You have access to all the functions that come with the data types too!",
                                  "You can do anything with this compiler. And I hope that you enjoy."
-                            })
-                            {
-                                Console.WriteLine(s);
-                            }
+                        })
+                        {
+                            Console.WriteLine(s);
+                        }
 
                         break;
 
-                        case "newinstance":
+                    case "newinstance":
 
-                            Process.Start(new ProcessStartInfo(Application.ExecutablePath));
-
-                        break;
-
-                        case "admin":
-
-                            Console.Clear();
-                            Console.Write("Top secret admin account password: ");
-
-                            if (Console.ReadLine().Equals("guest"))
-                            {
-                                user = user.Equals("admin") ? Environment.UserName : "admin";
-                            }
-                            else
-                            {
-                                writeLine("Invalid password. I wonder where you could find it?", "system");
-                            }
+                        Process.Start(new ProcessStartInfo(Application.ExecutablePath));
 
                         break;
 
-                        default: // Allowed default windows commands, just for extra... oomph.
+                    case "admin":
 
-                            if (str.Equals("ls")) // [mild laughter]
-                            {
-                                str = "dir";
-                            }
+                        Console.Clear();
+                        Console.Write("Top secret admin account password: ");
 
-                            proc.StartInfo.Arguments = "/c " + str;
-                            proc.Start();
-
-                            while (!proc.StandardOutput.EndOfStream){
-                                Console.WriteLine(proc.StandardOutput.ReadLine());
-                            }
+                        if (Console.ReadLine().Equals("guest"))
+                        {
+                            user = user.Equals("admin") ? Environment.UserName : "admin";
+                        }
+                        else
+                        {
+                            writeLine("Invalid password. I wonder where you could find it?", "system");
+                        }
 
                         break;
-                    }
+
+                    default: // Allowed default windows commands, just for extra... oomph.
+
+                        if (str.Equals("ls")) // [mild laughter]
+                        {
+                            str = "dir";
+                        }
+
+                        proc.StartInfo.Arguments = "/c " + str;
+                        proc.Start();
+
+                        while (!proc.StandardOutput.EndOfStream)
+                        {
+                            Console.WriteLine(proc.StandardOutput.ReadLine());
+                        }
+
+                        break;
+                }
+            }
+
+            Console.WriteLine("\n\n[ press enter to return to main menu ]");
+            Console.ReadLine();
+            Console.Clear();
+
+            if (globalChoice.Equals("dev"))
+            {
+                manageInputs(awaitInput(), fileName);
+            }
+            else
+            {
+                outputMenu();
+                while (!read(true).Equals("done")) { }
+                if (globalChoice.Equals("dev"))
+                {
+                    manageInputs(awaitInput(), fileName);
+                }
+                else
+                {
+                    manageInputs(globalChoice, fileName);
                 }
             }
         }

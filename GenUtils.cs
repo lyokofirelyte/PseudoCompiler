@@ -69,8 +69,16 @@ namespace PseudoCompiler
                 Console.WriteLine("" + number);
                 Console.WriteLine("This is somewhere in and around the below area... ish.");
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(findLine(number));
-                Console.ForegroundColor = (ConsoleColor) Enum.Parse(typeof(ConsoleColor), PseudoMain.setting["fcolor"], true);
+                try
+                {
+                    Console.WriteLine(findLine(number));
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Botched error parsing - can't find where the error is in the pseudo code.");
+                }
+
+                Console.ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), PseudoMain.setting["fcolor"], true);
                 Console.WriteLine();
                 return;
             }
@@ -91,7 +99,14 @@ namespace PseudoCompiler
 
             if (methInfo != null)
             {
-                methInfo.Invoke(null, new object[] { "Test" });
+                try
+                {
+                    methInfo.Invoke(null, new object[] { "Test" });
+                }
+                catch (Exception ee)
+                {
+                    Console.WriteLine("Unexpected error! Here's the stacktrace:\n" + ee.Message + "\n" + ee.StackTrace);
+                }
             }
         }
 

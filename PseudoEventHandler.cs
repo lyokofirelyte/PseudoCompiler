@@ -89,7 +89,7 @@ namespace PseudoCompiler
                         }
                     }
 
-                break;
+                    break;
 
                 case "debugs":
 
@@ -97,22 +97,23 @@ namespace PseudoCompiler
                     main.modifySetting("debugs", !currentDebug + "");
                     clicked.Text = !currentDebug + "";
 
-                break;
+                    break;
 
                 case "source":
 
                     Process.Start("https://github.com/lyokofirelyte/PseudoCompiler");
 
-                break;
+                    break;
 
                 case "update":
 
                     main.modifySetting("update", main.getSetting("update").Equals("automatic") ? "disabled" : "automatic");
                     clicked.Text = main.getSetting("update");
 
-                break;
+                    break;
 
-                case "fcolor": case "bcolor":
+                case "fcolor":
+                case "bcolor":
 
                     Form settingsForm = new Form();
 
@@ -132,7 +133,7 @@ namespace PseudoCompiler
                     settingsForm.MinimizeBox = false;
 
                     int yAmt = 0;
-                            
+
                     foreach (string set in Enum.GetNames(typeof(ConsoleColor)))
                     {
                         GenUtils.FancyLabel l = new GenUtils.FancyLabel()
@@ -162,7 +163,7 @@ namespace PseudoCompiler
                     settingsForm.Controls.Add(panel);
                     settingsForm.ShowDialog();
 
-                break;
+                    break;
             }
 
         }
