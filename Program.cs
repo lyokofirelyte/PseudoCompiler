@@ -1,20 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Net;
 using System.IO;
-using System.Threading;
-using System.Reflection;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using Microsoft.Win32;
 
 namespace PseudoCompiler
 {
@@ -29,14 +21,13 @@ namespace PseudoCompiler
         public string[] commands = new string[]
         {
             "run | run | Run your pseudo code from the file you provided.",
-            "view example | example | View an example I drew up for the class.",
             "reload file | reload | Reload the current file if you made changes.",
+            "view example | example | View an example I drew up for the class.",
             "about | about | What is this program? Who made it?",
-            "debug mode | debugs | Show some extra information about your modules.",
+            "debug mode | debug | Show some extra information about your modules.",
             "settings | settings | Change some cool settings like color and manage updates.",
             "open new file | open | Change the file without closing the program.",
             "view root files | root | View the data the compiler stores on your computer.",
-            "suggestions (beta) | suggestions | This fixes your parens, but that's about it.",
             "view source code | source | View the awesome source code for this project!",
             "recent changes | changelog | View a poorly documented list of changes.",
             "dev console | dev | For those hidden commands no one cares about.",
@@ -60,12 +51,12 @@ namespace PseudoCompiler
         private string name = "";
         private string cDir = "";
         private string globalChoice = "";
-        private static string latestChangeHardCodedBecauseLazy = "Better Menu, if/else bug fix, var name collision fix";
+        private static string latestChangeHardCodedBecauseLazy = "(12/2/15) Fix for calling a function that returns a real; cleanup";
         private static string suggestions = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/suggestions.pseudo";
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "2.0.1";
+        private static string version = "2.0.2";
 
         private Process proc;
 
@@ -609,6 +600,8 @@ namespace PseudoCompiler
                 text[i] = text[i].Replace("boolean ", "bool ");
                 text[i] = text[i].Replace("Boolean ", "bool ");
                 text[i] = text[i].Replace(" Boolean ", " bool ");
+                text[i] = text[i].Replace(" Real ", " float ");
+                text[i] = text[i].Replace(" real ", " float ");
 
                 string[] args = text[i].Split(' ');
 
@@ -880,10 +873,12 @@ namespace PseudoCompiler
 
                     case "close":
 
-                        text[i] = "gindex.Remove(" + args[1] + ");";
+                        text[i] = "try {";
+                        text[i] += "gindex.Remove(" + args[1] + ");";
                         text[i] += "fileSize.Remove(" + args[1] + ");";
+                        text[i] += "} catch (Exception){}";
 
-                        break;
+                    break;
 
                     case "write":
 
@@ -1087,29 +1082,6 @@ namespace PseudoCompiler
 
             Console.WriteLine("\n> You can press the Home key at any time to reload (even while your code is running)");
             Console.WriteLine("> Use your arrow keys to select an option. Press enter to confirm.");
-            /* Console.Write("> Type ");
-             cWrite("run", ConsoleColor.Magenta);
-             Console.WriteLine(" to run your pseudo code.");
-
-             Console.Write("> Type ");
-             cWrite("debug", ConsoleColor.Magenta);
-             Console.WriteLine(" to toggle module names on/off.");
-
-             Console.Write("> Type ");
-             cWrite("settings", ConsoleColor.Magenta);
-             Console.WriteLine(" to change options such as text and background color.");
-
-             Console.Write("> Type ");
-             cWrite("help", ConsoleColor.Magenta);
-             Console.WriteLine(" to see all of the commands you can type.");
-             Console.WriteLine();
-
-             writeLine("There is special syntax for reference variables and input.", "system");
-
-             Console.Write("> Please download the new example.txt for v1.6 by typing ");
-             cWrite("example", ConsoleColor.Magenta);
-
-             Console.WriteLine();*/
 
             outputMenu();
 
@@ -1333,6 +1305,7 @@ namespace PseudoCompiler
                     case "source":
 
                         Process.Start("https://github.com/lyokofirelyte/PseudoCompiler");
+                        Process.Start("https://github.com/lyokofirelyte/PseudoCompiler/blob/master/Program.cs");
 
                         break;
 
@@ -1424,7 +1397,7 @@ namespace PseudoCompiler
 
                         Process.Start(new ProcessStartInfo(Application.ExecutablePath));
 
-                        break;
+                    break;
 
                     case "admin":
 
@@ -1440,7 +1413,7 @@ namespace PseudoCompiler
                             writeLine("Invalid password. I wonder where you could find it?", "system");
                         }
 
-                        break;
+                    break;
 
                     default: // Allowed default windows commands, just for extra... oomph.
 
@@ -1457,13 +1430,9 @@ namespace PseudoCompiler
                             Console.WriteLine(proc.StandardOutput.ReadLine());
                         }
 
-                        break;
+                    break;
                 }
             }
-
-            Console.WriteLine("\n\n[ press enter to return to main menu ]");
-            Console.ReadLine();
-            Console.Clear();
 
             if (globalChoice.Equals("dev"))
             {
@@ -1471,6 +1440,9 @@ namespace PseudoCompiler
             }
             else
             {
+                Console.WriteLine("\n\n[ press enter to return to main menu ]");
+                Console.ReadLine();
+                Console.Clear();
                 outputMenu();
                 while (!read(true).Equals("done")) { }
                 if (globalChoice.Equals("dev"))

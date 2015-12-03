@@ -162,7 +162,7 @@ Display "Demo on declaring variables\n"
 	Declare integer i = 0
 	Declare String userInput
 
-	do-while when == true
+	do-while when
 
 		Display "ROUND ", i+1
 		i++

@@ -1,19 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-using System.Threading;
 using System.Reflection;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using Microsoft.Win32;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 
@@ -83,7 +73,7 @@ namespace PseudoCompiler
                 return;
             }
 
-            System.Reflection.Module module = compile.CompiledAssembly.GetModules()[0];
+            Module module = compile.CompiledAssembly.GetModules()[0];
             Type mt = null;
             MethodInfo methInfo = null;
 
