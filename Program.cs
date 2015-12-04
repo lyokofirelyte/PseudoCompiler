@@ -28,8 +28,7 @@ namespace PseudoCompiler
             "settings | settings | Change some cool settings like color and manage updates.",
             "open new file | open | Change the file without closing the program.",
             "view root files | root | View the data the compiler stores on your computer.",
-            "view source code | source | View the awesome source code for this project!",
-            "recent changes | changelog | View a poorly documented list of changes.",
+            "view source code & changes | source | View the awesome source code for this project!",
             "dev console | dev | For those hidden commands no one cares about.",
             "exit | exit | I wonder what this does?"
         };
@@ -51,12 +50,12 @@ namespace PseudoCompiler
         private string name = "";
         private string cDir = "";
         private string globalChoice = "";
-        private static string latestChangeHardCodedBecauseLazy = "(12/2/15) Fix for calling a function that returns a real; cleanup";
+        private static string latestChangeHardCodedBecauseLazy = "(12/3/15) Added squareRoot(number) function - returns a Real";
         private static string suggestions = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/suggestions.pseudo";
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        private static string version = "2.0.2";
+        private static string version = "2.0.3";
 
         private Process proc;
 
@@ -563,6 +562,10 @@ namespace PseudoCompiler
                             "return input.ToUpper();",
                         "}",
 
+                        "protected float squareRoot(object input){",
+                            "return float.Parse(Math.Sqrt(double.Parse(input.ToString())).ToString());",
+                        "}",
+
                         "%after%", // fill in converted code
                     "}",
                 "}"
@@ -602,6 +605,10 @@ namespace PseudoCompiler
                 text[i] = text[i].Replace(" Boolean ", " bool ");
                 text[i] = text[i].Replace(" Real ", " float ");
                 text[i] = text[i].Replace(" real ", " float ");
+                text[i] = text[i].Replace("Real ", "float ");
+                text[i] = text[i].Replace("real ", "float ");
+                text[i] = text[i].Replace(" Real", " float");
+                text[i] = text[i].Replace(" real", " float");
 
                 string[] args = text[i].Split(' ');
 
@@ -1080,10 +1087,10 @@ namespace PseudoCompiler
                 writeLine("Update check failed. No internet or github is down.", "error");
             }
 
-            Console.WriteLine("\n> You can press the Home key at any time to reload (even while your code is running)");
-            Console.WriteLine("> Use your arrow keys to select an option. Press enter to confirm.");
+            writeLine("You can press the Home key at any time to reload (even while your code is running)", "system");
+            writeLine("Use your arrow keys to select an option. Press enter to confirm.\n", "system");
 
-            outputMenu();
+            outputMenu(false);
 
             while (!read(true).Equals("done")){}
 
@@ -1101,9 +1108,13 @@ namespace PseudoCompiler
             manageInputs(str, fileName);
         }
 
-        private void outputMenu()
+        private void outputMenu(bool showHeader)
         {
-            Console.WriteLine("\n= - = - = - = - = - = - =\nPseudo Compiler Main Menu\n= - = - = - = - = - = - =\n");
+            if (showHeader)
+            {
+                Console.WriteLine("\n= - = - = - = - = - = - =\nPseudo Compiler Main Menu\n= - = - = - = - = - = - =\n");
+            }
+
             Console.BackgroundColor = ConsoleColor.DarkMagenta;
             globalTop = Console.CursorTop;
             globalIndex = 0;
@@ -1443,7 +1454,7 @@ namespace PseudoCompiler
                 Console.WriteLine("\n\n[ press enter to return to main menu ]");
                 Console.ReadLine();
                 Console.Clear();
-                outputMenu();
+                outputMenu(true);
                 while (!read(true).Equals("done")) { }
                 if (globalChoice.Equals("dev"))
                 {

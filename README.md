@@ -9,4 +9,4 @@ Pseudo Code Compiler for ITS 140
 
 ![p4](http://f.worldscolli.de/4mz4k.png)
 
-Version: 2.0.2
+Version: 2.0.3
