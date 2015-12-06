@@ -1,12 +1,16 @@
 # PseudoCompiler
 Pseudo Code Compiler for ITS 140
 
-![p1](http://i.imgur.com/9LVY5zC.png)
+Main Menu
+![p1](http://f.worldscolli.de/b40g1.png)
 
-![p2](http://f.worldscolli.de/vn4h5.png)
+Editing Code
+![p2](http://f.worldscolli.de/pfbbe.png)
 
-![p3](http://f.worldscolli.de/p2xmb.png)
+Running Code
+![p3](http://f.worldscolli.de/o3de8.png)
 
-![p4](http://f.worldscolli.de/4mz4k.png)
+Running Windows Commands
+![p4](http://f.worldscolli.de/f8fr8.png)
 
 Version: 3.0
