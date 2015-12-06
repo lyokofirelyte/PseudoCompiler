@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 
-namespace PseudoCompiler
+namespace PCGUI
 {
     class GenUtils
     {
@@ -44,7 +44,7 @@ namespace PseudoCompiler
             CompilerParams.GenerateExecutable = false;
             CompilerParams.CompilerOptions = "/optimize";
 
-            string[] references = { "System.dll" };
+            string[] references = { "System.dll", "System.Drawing.dll", "System.Windows.Forms.dll" };
             CompilerParams.ReferencedAssemblies.AddRange(references);
 
             CSharpCodeProvider provider = new CSharpCodeProvider();
@@ -52,24 +52,21 @@ namespace PseudoCompiler
 
             if (compile.Errors.HasErrors)
             {
-                Console.WriteLine("There is an issue with your code. Here's what happened:");
+                main.form.writeToConsole("There is an issue with your code. Here's what happened:", Color.Red);
                 string error = compile.Errors[compile.Errors.Count - 1].ToString().Substring(compile.Errors[compile.Errors.Count - 1].ToString().IndexOf('('));
-                Console.WriteLine(error);
+                main.form.writeToConsole(error, Color.Red);
                 int number = int.Parse(error.Split(',')[0].Substring(1));
-                Console.WriteLine("" + number);
-                Console.WriteLine("This is somewhere in and around the below area... ish.");
-                Console.ForegroundColor = ConsoleColor.Red;
+                main.form.writeToConsole("" + number, Color.Red);
+                main.form.writeToConsole("This is somewhere in and around the below area... ish.", Color.Red);
                 try
                 {
-                    Console.WriteLine(findLine(number));
+                    main.form.writeToConsole(findLine(number), Color.DarkRed);
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine("Botched error parsing - can't find where the error is in the pseudo code.");
+                    main.form.writeToConsole("Botched error parsing - can't find where the error is in the pseudo code.", Color.DarkRed);
                 }
 
-                Console.ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), PseudoMain.setting["fcolor"], true);
-                Console.WriteLine();
                 return;
             }
 
@@ -79,7 +76,7 @@ namespace PseudoCompiler
 
             if (module != null)
             {
-                mt = module.GetType("DynaCore.DynaCore");
+                mt = module.GetType("PCGUI.DynaCore");
             }
 
             if (mt != null)
@@ -91,11 +88,18 @@ namespace PseudoCompiler
             {
                 try
                 {
-                    methInfo.Invoke(null, new object[] { "Test" });
+                    methInfo.Invoke(null, new object[] { "Test", main.form.getTBox("console"), main.form.getTBox("input") });
                 }
                 catch (Exception ee)
                 {
-                    Console.WriteLine("Unexpected error! Here's the stacktrace:\n" + ee.Message + "\n" + ee.StackTrace);
+                    if (!ee.Message.Contains("Thread was being aborted"))
+                    {
+                        main.form.writeToConsole("Unexpected error! Here's the stacktrace:\n" + ee.Message + "\n" + ee.StackTrace + "\n" + ee.InnerException, Color.Red);
+                    }
+                    else
+                    {
+                        main.form.writeToConsole("Program terminated early!", Color.Red);
+                    }
                 }
             }
         }

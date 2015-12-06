@@ -115,3 +115,4 @@ Module fill(ref string[] items, ref integer[] amounts, integer size)
 	Display "The vending machine is now filled."
 
 end fill
+

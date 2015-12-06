@@ -270,35 +270,10 @@ Display "Demo on declaring variables\n"
 // == RAW C# Integration ==
 // You don't need to know this, it's just for fun!
 
-	Display "You can mix c# into your code if you know how to."
-	Display "This is an example of C# optional code for fun!"
-	Display "Would you like to see rainbows? [Y/N]"
-	Display "WARNING: FLASHING COLORS"
-
-	if (Console.ReadLine().ToLower().Equals("y"))
-        Array arr = Enum.GetValues(typeof(ConsoleColor));
-        Random rand = new Random();
-
-        for (int x = 0; x < 5; x++)
-        {
-            int sel = rand.Next(arr.Length);
-            Console.ForegroundColor = (ConsoleColor)arr.GetValue(sel);
-            sel = rand.Next(arr.Length);
-            Console.BackgroundColor = (ConsoleColor)arr.GetValue(sel);
-            Console.Clear();
-            for (int xx = 0; xx < Console.WindowHeight; xx++){ Console.WriteLine("Rainbows!"); }
-            System.Threading.Thread.Sleep(200);
-        }
-
-        Console.BackgroundColor = ConsoleColor.Black;
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.Clear()
-
-    end if
-
     // OTHER THINGS
     // You can do isString(input), isBoolean(input), and isInteger(input) - they return true or false
     // As well as toLower(input), toUpper(input)
+    Display new Random().Next(10), " is your random number."
 
 end module
 
@@ -313,3 +288,12 @@ Function String changeName(String inputName)
 	return inputName + " the great"
 
 end function
+
+
+
+
+
+
+
+
+
