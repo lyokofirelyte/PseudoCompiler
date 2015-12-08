@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace PCGUI
 {
@@ -14,7 +15,6 @@ namespace PCGUI
         private Size beginResize;
         private PseudoMain main;
         private WebBrowser wb;
-        private Point oldLoc;
         public Thread runThread;
 
         public Form1()
@@ -29,6 +29,10 @@ namespace PCGUI
             DoubleBuffered = true;
             removeSizeManagers();
             MaximizeBox = false;
+
+            AllowDrop = true;
+            DragDrop += Form1_DragDrop;
+            DragEnter += Form1_DragEnter;
 
             foreach (string manager in new string[] { "console", "input" })
             {
@@ -382,7 +386,6 @@ namespace PCGUI
                 modVisible(new Control[] {getTBox("editor"), findControl("editor_panel") }, false);
                 modVisible(new Control[] { getTBox("console"), findControl("console_panel") }, true);
                 modVisible(new Control[] { button_refresh, panel_refresh, button_run_code, panel_run_code, button_open_new_file, panel_open_new_file, button_running, panel_running, button_edit, panel_edit, button_about, panel_about, button_source, panel_source, loadedFile}, false);
-                oldLoc = panel_stop_code.Location;
                 panel_stop_code.Location = panel_run_code.Location;
                 findControl("panel_stop_code_info").Location = findControl("panel_run_code_info").Location;
                 main.manageInputs("run", main.name);
@@ -396,7 +399,7 @@ namespace PCGUI
 
         public void finish()
         {
-            panel_stop_code.Location = oldLoc;
+            panel_stop_code.Location = new Point(panel_run_code.Location.X + panel_stop_code.Width + 7, panel_run_code.Location.Y);
             findControl("panel_stop_code_info").Location = new Point(panel_stop_code.Location.X, panel_stop_code.Location.Y - panel_stop_code.Height);
             modVisible(new Control[] { button_refresh, panel_refresh, button_run_code, panel_run_code, button_open_new_file, panel_open_new_file, button_running, panel_running, button_edit, panel_edit, button_about, panel_about, button_source, panel_source, loadedFile}, true);
         }
@@ -678,5 +681,66 @@ namespace PCGUI
         {
             button_save_Click(sender, e);
         }
+
+        protected bool validData;
+        string path;
+        protected Image image;
+        protected Thread getImageThread;
+
+        private void Form1_DragEnter(object sender, DragEventArgs e)
+        {
+            string filename;
+            validData = GetFilename(out filename, e);
+            if (validData)
+            {
+                path = filename;
+                getImageThread = new Thread(new ThreadStart(LoadImage));
+                getImageThread.Start();
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+                e.Effect = DragDropEffects.None;
+        }
+        private bool GetFilename(out string filename, DragEventArgs e)
+        {
+            bool ret = false;
+            filename = String.Empty;
+            if ((e.AllowedEffect & DragDropEffects.Copy) == DragDropEffects.Copy)
+            {
+                Array data = ((IDataObject)e.Data).GetData("FileDrop") as Array;
+                if (data != null)
+                {
+                    if ((data.Length == 1) && (data.GetValue(0) is String))
+                    {
+                        filename = ((string[])data)[0];
+                        string ext = Path.GetExtension(filename).ToLower();
+                        if ((ext == ".jpg") || (ext == ".png") || (ext == ".bmp") || (ext == ".gif"))
+                        {
+                            ret = true;
+                        }
+                    }
+                }
+            }
+            return ret;
+        }
+        private void Form1_DragDrop(object sender, DragEventArgs e)
+        {
+            if (validData)
+            {
+                while (getImageThread.IsAlive)
+                {
+                    Application.DoEvents();
+                    Thread.Sleep(0);
+                }
+                BackgroundImage = image;
+            }
+        }
+        protected void LoadImage()
+        {
+            image = new Bitmap(path);
+        }
+
+        Bitmap bitmap, img;
+        Graphics bmpgraphic;
     }
 }

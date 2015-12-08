@@ -82,7 +82,7 @@
             // 
             this.sizeManager_console.Location = new System.Drawing.Point(12, 102);
             this.sizeManager_console.Name = "sizeManager_console";
-            this.sizeManager_console.Size = new System.Drawing.Size(1217, 486);
+            this.sizeManager_console.Size = new System.Drawing.Size(1147, 486);
             this.sizeManager_console.TabIndex = 0;
             // 
             // button_run_code
@@ -123,7 +123,7 @@
             // 
             this.sizeManager_input.Location = new System.Drawing.Point(12, 594);
             this.sizeManager_input.Name = "sizeManager_input";
-            this.sizeManager_input.Size = new System.Drawing.Size(1217, 35);
+            this.sizeManager_input.Size = new System.Drawing.Size(1147, 35);
             this.sizeManager_input.TabIndex = 4;
             // 
             // button_stop_code
@@ -212,7 +212,7 @@
             this.loadedFile.ForeColor = System.Drawing.Color.White;
             this.loadedFile.Location = new System.Drawing.Point(595, 49);
             this.loadedFile.Name = "loadedFile";
-            this.loadedFile.Size = new System.Drawing.Size(634, 47);
+            this.loadedFile.Size = new System.Drawing.Size(564, 47);
             this.loadedFile.TabIndex = 11;
             this.loadedFile.Text = "---------------------------------------------------------------------------------" +
     "----";
@@ -316,7 +316,7 @@
             // 
             this.button_minimize.BackColor = System.Drawing.Color.Transparent;
             this.button_minimize.Image = ((System.Drawing.Image)(resources.GetObject("button_minimize.Image")));
-            this.button_minimize.Location = new System.Drawing.Point(1180, 16);
+            this.button_minimize.Location = new System.Drawing.Point(1110, 16);
             this.button_minimize.Name = "button_minimize";
             this.button_minimize.Size = new System.Drawing.Size(30, 30);
             this.button_minimize.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -330,7 +330,7 @@
             // 
             this.button_exit.BackColor = System.Drawing.Color.Transparent;
             this.button_exit.Image = ((System.Drawing.Image)(resources.GetObject("button_exit.Image")));
-            this.button_exit.Location = new System.Drawing.Point(1216, 16);
+            this.button_exit.Location = new System.Drawing.Point(1146, 16);
             this.button_exit.Name = "button_exit";
             this.button_exit.Size = new System.Drawing.Size(30, 30);
             this.button_exit.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -372,7 +372,7 @@
             this.BackColor = System.Drawing.Color.SlateGray;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.ClientSize = new System.Drawing.Size(1241, 696);
+            this.ClientSize = new System.Drawing.Size(1171, 696);
             this.Controls.Add(this.panel_save);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.panel_about);

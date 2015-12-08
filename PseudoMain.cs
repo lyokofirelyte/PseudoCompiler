@@ -48,11 +48,11 @@ namespace PCGUI
         public string name = "";
         public string cDir = "";
         public string globalChoice = "";
-        public static string latestChangeHardCodedBecauseLazy = "(12/5/15) GUI interface implemented";
+        public static string latestChangeHardCodedBecauseLazy = "(12/7/15) Fixed runaway stop button issue; slightly smaller width";
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        public static string version = "3.0";
+        public static string version = "3.1";
 
         public Process proc;
 
@@ -858,9 +858,8 @@ namespace PCGUI
                     }
 
                     writeLine("", "system");
-                    form.writeToConsole("This is a beta test of my new GUI system.", Color.Magenta);
+                    form.writeToConsole("Bored? Try dragging an image file into the program. It'll be fun, I promise.", Color.Magenta);
                     form.writeToConsole("Please report bugs to dtossber@purduecal.edu - thanks!", Color.Magenta);
-                    form.writeToConsole("Hover over buttons to see what they do. There is a new edit feature!", Color.DeepSkyBlue);
                 }
             }
             catch (Exception)
