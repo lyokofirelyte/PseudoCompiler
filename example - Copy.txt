@@ -1,0 +1,21 @@
+module main()
+
+Form form = new Form()
+WebBrowser wb = new WebBrowser();
+wb.Url = new System.Uri("www.google.com")
+wb.Size = new Size(100, 100)
+wb.Visible = true
+form.Controls.Add(wb)
+
+end
+
+
+
+
+
+
+
+
+
+
+

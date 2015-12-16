@@ -1,0 +1,49 @@
+Module main()
+
+	Display "Welcome to the code reader. This just displays a txt file back to you."
+	Display "Please type the name of your file (with.txt at the end)"
+
+	Declare InputFile yourFile
+	Declare String fileName
+	Declare String currentRead
+	Declare Integer lines
+
+	input fileName
+
+	Display "How many lines is your text file?"
+	lines = inputAsInteger()
+
+	if lines < 0
+		Display "No."
+		return
+	end if
+
+	Declare String code[lines]
+	Declare Integer i = 0
+
+	Open yourFile fileName
+
+	while NOT eof(yourFile)
+		read yourFile code[i]
+		i = i + 1
+	end while
+
+	Call process(code, lines)
+
+end module
+
+Module end()
+
+	Display "That's it!"
+
+end Module
+
+Module process(String code, Integer lines)
+
+	for i = 0 to lines-1
+		Display "Line ", i, " is: ", code[i]
+	end for
+
+	Call end()
+
+end module
