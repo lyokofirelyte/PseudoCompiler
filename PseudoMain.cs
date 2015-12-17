@@ -858,7 +858,6 @@ namespace PCGUI
                     }
 
                     writeLine("", "system");
-                    form.writeToConsole("Type the number to unlock the secret code in the input box!", Color.Magenta);
                     form.writeToConsole("Please report bugs to dtossber@purduecal.edu - thanks!", Color.Magenta);
                 }
             }
