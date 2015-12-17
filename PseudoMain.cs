@@ -48,11 +48,11 @@ namespace PCGUI
         public string name = "";
         public string cDir = "";
         public string globalChoice = "";
-        public static string latestChangeHardCodedBecauseLazy = "(12/7/15) Fixed runaway stop button issue; slightly smaller width";
+        public static string latestChangeHardCodedBecauseLazy = "(12/16/15) Removed gift code event (completed)";
         private static string settingsDirectory = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/";
         private static string settingsFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/settings.pseudo";
         private static string csFile = "C:/Users/" + Environment.UserName + "/AppData/Roaming/PseudoCompiler/compile/cs.pseudo";
-        public static string version = "3.1";
+        public static string version = "3.1.2";
 
         public Process proc;
 
@@ -85,7 +85,7 @@ namespace PCGUI
             PseudoMain.first = false;
             allowSettings = File.Exists(settingsFile);
 
-            if (!allowSettings)
+            if (!allowSettings) 
             {
                 try
                 {
@@ -858,7 +858,7 @@ namespace PCGUI
                     }
 
                     writeLine("", "system");
-                    form.writeToConsole("Bored? Try dragging an image file into the program. It'll be fun, I promise.", Color.Magenta);
+                    form.writeToConsole("Type the number to unlock the secret code in the input box!", Color.Magenta);
                     form.writeToConsole("Please report bugs to dtossber@purduecal.edu - thanks!", Color.Magenta);
                 }
             }
